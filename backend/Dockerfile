@@ -6,14 +6,11 @@ WORKDIR /app
 # Install pnpm globally
 RUN npm install -g pnpm
 
-# Allow build scripts (required for bcrypt, @parcel/watcher, etc.)
-RUN pnpm config set ignore-build-scripts false
-
 # Copy lockfile and package manifest
 COPY package.json pnpm-lock.yaml ./
 
-# Install all dependencies
-RUN pnpm install --frozen-lockfile
+# Install all dependencies (allow native builds for bcrypt, etc.)
+RUN pnpm install --frozen-lockfile --allow-build=bcrypt --allow-build=@parcel/watcher --allow-build=@scarf/scarf --allow-build=unrs-resolver
 
 # Rebuild native dependencies needed for the build / runtime
 RUN pnpm rebuild bcrypt
@@ -29,13 +26,10 @@ WORKDIR /app
 # Install pnpm globally
 RUN npm install -g pnpm
 
-# Allow build scripts (required for bcrypt, @parcel/watcher, etc.)
-RUN pnpm config set ignore-build-scripts false
-
 COPY package.json pnpm-lock.yaml ./
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
+# Install production dependencies only (allow native builds for bcrypt, etc.)
+RUN pnpm install --frozen-lockfile --prod --allow-build=bcrypt --allow-build=@parcel/watcher --allow-build=@scarf/scarf --allow-build=unrs-resolver
 
 # Rebuild native dependencies for production
 RUN pnpm rebuild bcrypt

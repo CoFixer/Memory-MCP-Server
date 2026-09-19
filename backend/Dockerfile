@@ -9,8 +9,8 @@ RUN npm install -g pnpm
 # Copy lockfile and package manifest
 COPY package.json pnpm-lock.yaml ./
 
-# Install all dependencies (allow native builds for bcrypt, etc.)
-RUN pnpm install --frozen-lockfile --allow-build=bcrypt --allow-build=@parcel/watcher --allow-build=@scarf/scarf --allow-build=unrs-resolver
+# Install all dependencies
+RUN pnpm install --frozen-lockfile
 
 # Rebuild native dependencies needed for the build / runtime
 RUN pnpm rebuild bcrypt
@@ -28,8 +28,8 @@ RUN npm install -g pnpm
 
 COPY package.json pnpm-lock.yaml ./
 
-# Install production dependencies only (allow native builds for bcrypt, etc.)
-RUN pnpm install --frozen-lockfile --prod --allow-build=bcrypt --allow-build=@parcel/watcher --allow-build=@scarf/scarf --allow-build=unrs-resolver
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
 
 # Rebuild native dependencies for production
 RUN pnpm rebuild bcrypt

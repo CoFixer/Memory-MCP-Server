@@ -55,24 +55,18 @@ export class EmbeddingConfigService implements OnModuleInit {
   }
 
   private async seedDefaultConfig(): Promise<void> {
-    const provider = this.configService.get<string>('EMBEDDING_PROVIDER', 'ollama') as EmbeddingProviderType;
-    const model = this.configService.get<string>('EMBEDDING_MODEL', 'nomic-embed-text');
-    const baseUrl = this.configService.get<string>('EMBEDDING_BASE_URL', 'http://localhost:11434');
-    const dimensions = parseInt(this.configService.get<string>('EMBEDDING_DIMENSIONS', '768'), 10);
-
-    let apiKey: string | undefined;
-    if (provider === 'openai') {
-      apiKey = this.configService.get<string>('OPENAI_API_KEY');
-    } else if (provider === 'openrouter') {
-      apiKey = this.configService.get<string>('OPENROUTER_API_KEY');
-    }
+    // Hardcoded bootstrap defaults — admins change via dashboard
+    const provider = EmbeddingProviderType.OLLAMA;
+    const model = 'nomic-embed-text';
+    const baseUrl = 'http://localhost:11434';
+    const dimensions = 768;
 
     const config = this.configRepository.create({
       name: 'Default',
       provider,
       model,
       base_url: baseUrl || null,
-      api_key_encrypted: apiKey ? encrypt(apiKey, this.encryptionSecret) : null,
+      api_key_encrypted: null,
       dimensions,
       is_active: true,
       is_default: true,

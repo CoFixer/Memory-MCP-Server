@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
 import { AuthService } from '../../../../src/modules/auth/auth.service';
 import { ApiKey } from '../../../../src/database/entities/api-key.entity';
 import { User } from '../../../../src/database/entities/user.entity';
@@ -25,6 +26,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: getRepositoryToken(ApiKey), useFactory: mockApiKeyRepository },
         { provide: getRepositoryToken(User), useFactory: mockUserRepository },
+        { provide: JwtService, useValue: { sign: jest.fn(() => 'test-token') } },
       ],
     }).compile();
 

@@ -7,6 +7,7 @@ import Memories from './pages/Memories';
 import Users from './pages/Users';
 import Projects from './pages/Projects';
 import ApiKeys from './pages/ApiKeys';
+import Settings from './pages/Settings';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ function AppRoutes() {
         <Route path="users" element={<Users />} />
         <Route path="projects" element={<Projects />} />
         <Route path="api-keys" element={<ApiKeys />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
   );

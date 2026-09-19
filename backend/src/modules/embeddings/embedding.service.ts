@@ -3,7 +3,7 @@ import { EmbeddingConfigService } from './embedding-config.service';
 import { EmbeddingProvider } from './embedding-provider.interface';
 
 @Injectable()
-export class EmbeddingService implements EmbeddingProvider {
+export class EmbeddingService {
   constructor(private readonly configService: EmbeddingConfigService) {}
 
   private async getProvider(): Promise<EmbeddingProvider> {

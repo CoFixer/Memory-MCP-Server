@@ -48,4 +48,12 @@ export const api = {
   getProjects: () => request('/admin/projects'),
   getApiKeys: () => request('/admin/api-keys'),
   getWorkspaces: () => request('/admin/workspaces'),
+
+  // Embedding Providers (admin only)
+  getEmbeddingProviders: () => request('/admin/embedding-providers'),
+  createEmbeddingProvider: (data: any) => request('/admin/embedding-providers', { method: 'POST', body: JSON.stringify(data) }),
+  updateEmbeddingProvider: (id: string, data: any) => request(`/admin/embedding-providers/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteEmbeddingProvider: (id: string) => request(`/admin/embedding-providers/${id}`, { method: 'DELETE' }),
+  setDefaultEmbeddingProvider: (id: string) => request(`/admin/embedding-providers/${id}/set-default`, { method: 'POST' }),
+  testEmbeddingProvider: (id: string) => request(`/admin/embedding-providers/${id}/test`, { method: 'POST' }),
 };

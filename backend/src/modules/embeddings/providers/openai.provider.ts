@@ -1,40 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { EmbeddingProvider } from '../embedding-provider.interface';
 import OpenAI from 'openai';
 
+export interface OpenAIProviderConfig {
+  apiKey: string;
+  model: string;
+  dimensions: number;
+}
+
 @Injectable()
 export class OpenAIProvider implements EmbeddingProvider {
-  private client: OpenAI;
-  private readonly model: string;
-  private readonly dimensions: number;
+  private config: OpenAIProviderConfig | null = null;
+  private client: OpenAI | null = null;
 
-  constructor(private readonly configService: ConfigService) {
-    this.model = this.configService.get<string>('EMBEDDING_MODEL', 'text-embedding-3-small');
-    this.dimensions = parseInt(this.configService.get<string>('EMBEDDING_DIMENSIONS', '1536'), 10);
-  }
-
-  private getClient(): OpenAI {
-    if (!this.client) {
-      const apiKey = this.configService.get<string>('OPENAI_API_KEY');
-      if (!apiKey) {
-        throw new Error('OPENAI_API_KEY is not configured');
-      }
-      this.client = new OpenAI({ apiKey });
-    }
-    return this.client;
+  setConfig(config: OpenAIProviderConfig): void {
+    this.config = config;
+    this.client = new OpenAI({ apiKey: config.apiKey });
   }
 
   async generateEmbedding(text: string): Promise<number[]> {
-    const response = await this.getClient().embeddings.create({
-      model: this.model,
+    if (!this.config || !this.client) {
+      throw new Error('OpenAIProvider config not set');
+    }
+    const response = await this.client.embeddings.create({
+      model: this.config.model,
       input: text,
-      dimensions: this.dimensions,
+      dimensions: this.config.dimensions,
     });
     return response.data[0].embedding;
   }
 
   getDimensions(): number {
-    return this.dimensions;
+    if (!this.config) {
+      throw new Error('OpenAIProvider config not set');
+    }
+    return this.config.dimensions;
   }
 }

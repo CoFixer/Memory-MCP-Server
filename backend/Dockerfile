@@ -6,6 +6,9 @@ WORKDIR /app
 # Install pnpm globally
 RUN npm install -g pnpm
 
+# Allow build scripts (required for bcrypt, @parcel/watcher, etc.)
+RUN pnpm config set ignore-build-scripts false
+
 # Copy lockfile and package manifest
 COPY package.json pnpm-lock.yaml ./
 
@@ -25,6 +28,9 @@ WORKDIR /app
 
 # Install pnpm globally
 RUN npm install -g pnpm
+
+# Allow build scripts (required for bcrypt, @parcel/watcher, etc.)
+RUN pnpm config set ignore-build-scripts false
 
 COPY package.json pnpm-lock.yaml ./
 

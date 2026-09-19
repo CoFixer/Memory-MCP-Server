@@ -1,0 +1,110 @@
+{
+  "version": "2.0",
+  "rules": [
+    {
+      "name": "commit",
+      "trigger": "/skill:commit",
+      "description": "Git commit & PR workflow"
+    },
+    {
+      "name": "create-dev-pr",
+      "trigger": "/skill:create-dev-pr",
+      "description": "Create a PR to the dev branch with validation"
+    },
+    {
+      "name": "find-gaps",
+      "trigger": "/skill:find-gaps",
+      "description": "Find design-to-code gaps and compliance issues"
+    },
+    {
+      "name": "fix-gaps",
+      "trigger": "/skill:fix-gaps",
+      "description": "Fix gaps found by gap analysis"
+    },
+    {
+      "name": "generate-docs",
+      "trigger": "/skill:generate-docs",
+      "description": "Generate API, database, and knowledge docs"
+    },
+    {
+      "name": "generate-ouroboros",
+      "trigger": "/skill:generate-ouroboros",
+      "description": "Validate PRD features through Socratic interview"
+    },
+    {
+      "name": "review-tickets",
+      "trigger": "/skill:review-tickets",
+      "description": "Review and fix Notion tickets"
+    },
+    {
+      "name": "run-fullstack",
+      "trigger": "/skill:run-fullstack",
+      "description": "Run the full-stack development pipeline"
+    },
+    {
+      "name": "reflect",
+      "trigger": "/skill:reflect",
+      "description": "Analyze conversation for learnings"
+    },
+    {
+      "name": "generate-prd",
+      "trigger": "/skill:generate-prd",
+      "description": "Generate PRD from client input"
+    },
+    {
+      "name": "generate-ppt",
+      "trigger": "/skill:generate-ppt",
+      "description": "Generate HTML presentations"
+    },
+    {
+      "name": "generate-proposal",
+      "trigger": "/skill:generate-proposal",
+      "description": "Generate client proposals"
+    },
+    {
+      "name": "generate-invoice",
+      "trigger": "/skill:generate-invoice",
+      "description": "Generate invoices and quotations"
+    },
+    {
+      "name": "run-playwright",
+      "trigger": "/skill:run-playwright",
+      "description": "Run Playwright E2E tests"
+    },
+    {
+      "name": "crud-module-generator",
+      "trigger": "/skill:crud-module-generator",
+      "description": "Generate a complete NestJS CRUD module"
+    },
+    {
+      "name": "response-dto-factory",
+      "trigger": "/skill:response-dto-factory",
+      "description": "Generate standardized response DTOs"
+    },
+    {
+      "name": "guard-decorator-builder",
+      "trigger": "/skill:guard-decorator-builder",
+      "description": "Build custom NestJS guard decorators"
+    },
+    {
+      "name": "swagger-doc-generator",
+      "trigger": "/skill:swagger-doc-generator",
+      "description": "Generate Swagger/OpenAPI documentation"
+    },
+    {
+      "name": "code-quality-checker",
+      "trigger": "/skill:code-quality-checker",
+      "description": "Check code quality and suggest improvements"
+    },
+    {
+      "name": "e2e-test-generator",
+      "trigger": "/skill:e2e-test-generator",
+      "description": "Generate end-to-end tests for NestJS controllers and APIs"
+    },
+    {
+      "name": "develop-skills",
+      "trigger": "/skill:develop-skills",
+      "description": "Creating and managing OpenCode skills, hooks, and skill-rules configuration"
+    }
+  ]
+}

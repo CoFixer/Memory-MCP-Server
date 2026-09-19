@@ -3,36 +3,30 @@ FROM node:24-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install latest npm (ensures native builds work reliably)
+RUN npm install -g npm@latest
 
-# Copy lockfile and package manifest
-COPY package.json pnpm-lock.yaml ./
+# Copy package manifest
+COPY package.json ./
 
 # Install all dependencies
-RUN pnpm install --frozen-lockfile
-
-# Rebuild native dependencies needed for the build / runtime
-RUN pnpm rebuild bcrypt
+RUN npm install
 
 COPY . .
-RUN pnpm run build
+RUN npm run build
 
 # Production stage
 FROM node:24-alpine AS production
 
 WORKDIR /app
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install latest npm
+RUN npm install -g npm@latest
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json ./
 
 # Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
-
-# Rebuild native dependencies for production
-RUN pnpm rebuild bcrypt
+RUN npm install --omit=dev
 
 COPY --from=builder /app/dist ./dist
 

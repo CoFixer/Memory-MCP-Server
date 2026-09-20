@@ -23,6 +23,11 @@ RUN bun install
 
 # Copy source code and build
 COPY . .
+
+# Accept build-time API URL (e.g. https://api.yourdomain.com/api/v1)
+ARG VITE_API_BASE_URL=/api/v1
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
 RUN bun run build
 
 # ============================================
@@ -37,7 +42,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose HTTP port
-EXPOSE 80
+EXPOSE 8080
 
 # Start nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]

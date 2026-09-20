@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Get, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 
@@ -7,10 +7,11 @@ class LoginDto {
   password: string;
 }
 
-class RegisterDto {
+class SetupDto {
   email: string;
   password: string;
   name?: string;
+  username?: string;
 }
 
 @ApiTags('Auth')
@@ -25,10 +26,19 @@ export class AuthController {
     return this.authService.login(dto.email, dto.password);
   }
 
-  @Post('register')
-  @ApiOperation({ summary: 'Register new user' })
-  @ApiResponse({ status: 201, description: 'User created' })
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto.email, dto.password, dto.name);
+  @Get('setup-required')
+  @ApiOperation({ summary: 'Check if initial admin setup is required' })
+  @ApiResponse({ status: 200, description: 'Returns setup required status' })
+  async setupRequired() {
+    const required = await this.authService.isSetupRequired();
+    return { setup_required: required };
+  }
+
+  @Post('setup')
+  @ApiOperation({ summary: 'Initial admin setup (only allowed when no admin exists)' })
+  @ApiResponse({ status: 201, description: 'Admin created' })
+  @ApiResponse({ status: 409, description: 'Admin already exists' })
+  async setup(@Body() dto: SetupDto) {
+    return this.authService.setupAdmin(dto.email, dto.password, dto.name, dto.username);
   }
 }

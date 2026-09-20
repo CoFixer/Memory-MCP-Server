@@ -27,6 +27,9 @@ export class User {
   @Column('varchar', { length: 255, nullable: true })
   name: string | null;
 
+  @Column('varchar', { length: 255, unique: true, nullable: true })
+  username: string | null;
+
   @Column('varchar', { length: 255, nullable: true })
   password_hash: string | null;
 

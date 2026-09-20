@@ -27,26 +27,37 @@ async function request(path: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(url, { ...options, headers });
-  if (res.status === 401) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.reload();
-    throw new Error('Unauthorized');
-  }
-  if (!res.ok) {
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('text/html')) {
-      throw new Error('Backend returned HTML instead of JSON. Is the backend running?');
+  try {
+    const res = await fetch(url, { ...options, headers });
+    if (res.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.reload();
+      throw new Error('Unauthorized');
     }
-    const err = await res.json().catch(() => ({}));
-    throw new Error(extractErrorMessage(err) || `HTTP ${res.status}`);
+    if (!res.ok) {
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('text/html')) {
+        throw new Error('Backend returned HTML instead of JSON. Is the backend running?');
+      }
+      const err = await res.json().catch(() => ({}));
+      throw new Error(extractErrorMessage(err) || `HTTP ${res.status}`);
+    }
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Unexpected response from backend at ${url}. Is the API reachable?`);
+    }
+    return res.status === 204 ? null : res.json();
+  } catch (err: any) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error(
+        `Failed to connect to API at ${url}. ` +
+        `This is usually a CORS or network issue. ` +
+        `Make sure ALLOW_ORIGINS includes "${window.location.origin}" in your backend environment.`
+      );
+    }
+    throw err;
   }
-  const contentType = res.headers.get('content-type') || '';
-  if (!contentType.includes('application/json')) {
-    throw new Error(`Unexpected response from backend at ${url}. Is the API reachable?`);
-  }
-  return res.status === 204 ? null : res.json();
 }
 
 export const api = {

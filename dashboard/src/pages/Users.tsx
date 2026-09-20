@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { Plus, Pencil, Trash2, Loader2, X, Check } from 'lucide-react';
 
 interface User {
@@ -12,6 +13,8 @@ interface User {
 }
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -77,15 +80,17 @@ export default function UsersPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white mb-1">Users</h1>
-          <p className="text-slate-400">Manage users and their roles</p>
+          <p className="text-slate-400">{isAdmin ? 'Manage users and their roles' : 'All registered users'}</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add User
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add User
+          </button>
+        )}
       </div>
 
       {error && (
@@ -94,7 +99,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      {showForm && (
+      {showForm && isAdmin && (
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-6">
           <h3 className="text-lg font-semibold text-white mb-4">Create User</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -143,16 +148,16 @@ export default function UsersPage() {
               <th className="px-6 py-3">Email</th>
               <th className="px-6 py-3">Role</th>
               <th className="px-6 py-3">Created</th>
-              <th className="px-6 py-3 text-right">Actions</th>
+              {isAdmin && <th className="px-6 py-3 text-right">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800">
             {loading ? (
-              <tr><td colSpan={5} className="px-6 py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-500" /></td></tr>
+              <tr><td colSpan={isAdmin ? 5 : 4} className="px-6 py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-500" /></td></tr>
             ) : users.length ? (
               users.map((u) => (
                 <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
-                  {editingId === u.id ? (
+                  {editingId === u.id && isAdmin ? (
                     <>
                       <td className="px-6 py-4"><input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder={u.name || ''} className="w-full px-2 py-1 bg-slate-800 border border-slate-700 rounded text-white text-sm" /></td>
                       <td className="px-6 py-4 text-slate-400">{u.email}</td>
@@ -178,18 +183,20 @@ export default function UsersPage() {
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${u.role === 'admin' ? 'bg-primary-900/30 text-primary-400' : 'bg-slate-800 text-slate-400'}`}>{u.role}</span>
                       </td>
                       <td className="px-6 py-4 text-slate-500">{new Date(u.created_at).toLocaleDateString()}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => { setEditingId(u.id); setEditForm({ name: u.name || '', role: u.role, password: '' }); }} className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700"><Pencil className="w-4 h-4" /></button>
-                          <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                      </td>
+                      {isAdmin && (
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button onClick={() => { setEditingId(u.id); setEditForm({ name: u.name || '', role: u.role, password: '' }); }} className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700"><Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      )}
                     </>
                   )}
                 </tr>
               ))
             ) : (
-              <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">No users found</td></tr>
+              <tr><td colSpan={isAdmin ? 5 : 4} className="px-6 py-8 text-center text-slate-500">No users found</td></tr>
             )}
           </tbody>
         </table>

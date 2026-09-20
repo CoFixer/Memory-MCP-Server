@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 
 const nav = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/memories', label: 'Memories', icon: Brain },
+  { path: '/', label: 'Dashboard', icon: LayoutDashboard, adminOnly: true },
+  { path: '/memories', label: 'Memories', icon: Brain, adminOnly: true },
   { path: '/users', label: 'Users', icon: Users },
   { path: '/projects', label: 'Projects', icon: FolderKanban },
   { path: '/api-keys', label: 'API Keys', icon: KeyRound },

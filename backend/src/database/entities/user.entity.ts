@@ -10,6 +10,7 @@ import { Project } from './project.entity';
 import { Workspace } from './workspace.entity';
 import { Memory } from './memory.entity';
 import { ApiKey } from './api-key.entity';
+import { ProjectAssignment } from './project-assignment.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -60,4 +61,7 @@ export class User {
 
   @OneToMany(() => Memory, (memory) => memory.user)
   memories: Memory[];
+
+  @OneToMany(() => ProjectAssignment, (assignment) => assignment.user)
+  project_assignments: ProjectAssignment[];
 }

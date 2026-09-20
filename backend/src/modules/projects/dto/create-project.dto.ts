@@ -34,4 +34,9 @@ export class CreateProjectDto {
   @IsOptional()
   @IsObject()
   metadata?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: 'PRD markdown content to store as project memory' })
+  @IsOptional()
+  @IsString()
+  prd_content?: string;
 }

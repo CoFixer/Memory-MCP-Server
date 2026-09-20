@@ -16,6 +16,7 @@ import { CacheModule } from '../cache/cache.module';
 import { AuditModule } from '../audit/audit.module';
 import { AuthModule } from '../auth/auth.module';
 import { MemoriesModule } from '../memories/memories.module';
+import { ApiKeysModule } from '../api-keys/api-keys.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { MemoriesModule } from '../memories/memories.module';
     AuditModule,
     AuthModule,
     MemoriesModule,
+    ApiKeysModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, EmbeddingConfigService, OllamaProvider, OpenAIProvider, OpenRouterProvider],

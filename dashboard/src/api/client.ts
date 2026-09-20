@@ -32,7 +32,7 @@ async function request(path: string, options: RequestInit = {}) {
   }
   const contentType = res.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
-    throw new Error('Unexpected response from backend. Is the backend running on localhost:3000?');
+    throw new Error(`Unexpected response from backend at ${url}. Is the API reachable?`);
   }
   return res.status === 204 ? null : res.json();
 }

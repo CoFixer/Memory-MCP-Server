@@ -14,12 +14,14 @@ import { OpenAIProvider } from '../embeddings/providers/openai.provider';
 import { OpenRouterProvider } from '../embeddings/providers/openrouter.provider';
 import { CacheModule } from '../cache/cache.module';
 import { AuditModule } from '../audit/audit.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Memory, Project, ApiKey, Workspace, EmbeddingProviderConfig]),
     CacheModule,
     AuditModule,
+    AuthModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, EmbeddingConfigService, OllamaProvider, OpenAIProvider, OpenRouterProvider],

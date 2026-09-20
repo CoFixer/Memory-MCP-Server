@@ -32,8 +32,10 @@ async function request(path: string, options: RequestInit = {}) {
 export const api = {
   login: (email: string, password: string) =>
     request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  register: (email: string, password: string, name?: string) =>
-    request('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name }) }),
+  setupRequired: () =>
+    request('/auth/setup-required'),
+  setupAdmin: (data: { email: string; password: string; name?: string; username?: string }) =>
+    request('/auth/setup', { method: 'POST', body: JSON.stringify(data) }),
 
   getStats: () => request('/admin/stats'),
   getUsers: () => request('/admin/users'),

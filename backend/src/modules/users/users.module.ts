@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
@@ -6,7 +6,7 @@ import { User } from '../../database/entities/user.entity';
 import { ApiKeysModule } from '../api-keys/api-keys.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), ApiKeysModule],
+  imports: [TypeOrmModule.forFeature([User]), forwardRef(() => ApiKeysModule)],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],

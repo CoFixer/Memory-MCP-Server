@@ -76,6 +76,11 @@ function AppRoutes() {
     return <Navigate to="/setup" replace />;
   }
 
+  // If setup is NOT required and user is not logged in, redirect away from setup page to login
+  if (!setupRequired && !user && location.pathname === '/setup') {
+    return <Navigate to="/login" replace />;
+  }
+
   // Authenticated users should not see login/setup pages
   if (user && (location.pathname === '/login' || location.pathname === '/setup')) {
     return <Navigate to="/" replace />;

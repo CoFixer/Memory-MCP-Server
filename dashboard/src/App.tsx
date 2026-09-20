@@ -46,12 +46,23 @@ function AppRoutes() {
   }
 
   if (apiError && !user) {
+    const isHtmlError = apiError.includes('Unexpected token') || apiError.includes('<!');
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-md w-full text-center">
           <h1 className="text-xl font-semibold text-white mb-2">Cannot connect to backend</h1>
-          <p className="text-slate-400 text-sm mb-4">{apiError}</p>
-          <p className="text-slate-500 text-xs">Make sure the backend is running on localhost:3000</p>
+          <p className="text-slate-400 text-sm mb-4">
+            {isHtmlError
+              ? 'Backend returned HTML instead of JSON. Is the backend running on localhost:3000?'
+              : apiError}
+          </p>
+          <div className="bg-slate-800 rounded-lg p-4 text-left text-xs text-slate-300 space-y-2">
+            <p className="font-semibold text-slate-200">To start the backend:</p>
+            <code className="block bg-slate-950 rounded px-3 py-2 text-primary-400 font-mono">
+              cd backend && npm run start:dev
+            </code>
+            <p className="text-slate-500 mt-2">Then refresh this page.</p>
+          </div>
         </div>
       </div>
     );

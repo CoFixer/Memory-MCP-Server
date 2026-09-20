@@ -23,8 +23,16 @@ async function request(path: string, options: RequestInit = {}) {
     throw new Error('Unauthorized');
   }
   if (!res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      throw new Error('Backend returned HTML instead of JSON. Is the backend running?');
+    }
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `HTTP ${res.status}`);
+  }
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error('Unexpected response from backend. Is the backend running on localhost:3000?');
   }
   return res.status === 204 ? null : res.json();
 }

@@ -111,10 +111,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter basename={import.meta.env.VITE_BASENAME || '/'}>
+    <BrowserRouter basename={import.meta.env.VITE_BASENAME || '/'}>
+      <AuthProvider>
         <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

@@ -1,13 +1,15 @@
 import { Controller, Post, Get, Body, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IsEmail, IsString, IsOptional, MinLength } from 'class-validator';
+import { IsEmail, IsString, IsOptional, MinLength, IsNotEmpty } from 'class-validator';
 import { AuthService } from './auth.service';
 
 class LoginDto {
-  @IsEmail()
-  email: string;
+  @IsString()
+  @IsNotEmpty()
+  identifier: string;
 
   @IsString()
+  @IsNotEmpty()
   password: string;
 }
 
@@ -37,7 +39,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Dashboard login' })
   @ApiResponse({ status: 200, description: 'JWT token returned' })
   async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto.email, dto.password);
+    return this.authService.login(dto.identifier, dto.password);
   }
 
   @Get('setup-required')

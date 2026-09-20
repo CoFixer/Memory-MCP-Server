@@ -5,7 +5,7 @@ import { api } from '../api/client';
 import { Brain, Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -18,7 +18,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const res = await api.login(email, password);
+      const res = await api.login(identifier, password);
       login(res.access_token, res.user);
       navigate('/');
     } catch (err: any) {
@@ -48,14 +48,14 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Email or Username</label>
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="admin@example.com"
+                placeholder="admin@example.com or johndoe"
               />
             </div>
             <div>

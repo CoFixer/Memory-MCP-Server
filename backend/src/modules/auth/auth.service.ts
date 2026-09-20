@@ -38,8 +38,10 @@ export class AuthService {
     return null;
   }
 
-  async login(email: string, password: string) {
-    const user = await this.userRepository.findOne({ where: { email } });
+  async login(identifier: string, password: string) {
+    const user = await this.userRepository.findOne({
+      where: [{ email: identifier }, { username: identifier }],
+    });
     if (!user || !user.password_hash) {
       throw new UnauthorizedException('Invalid credentials');
     }

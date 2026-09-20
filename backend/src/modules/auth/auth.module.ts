@@ -14,7 +14,7 @@ import { UsersModule } from '../users/users.module';
   imports: [
     UsersModule,
     TypeOrmModule.forFeature([ApiKey, User]),
-    PassportModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -26,6 +26,6 @@ import { UsersModule } from '../users/users.module';
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, PassportModule],
 })
 export class AuthModule {}

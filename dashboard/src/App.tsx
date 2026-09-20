@@ -22,11 +22,18 @@ function AppRoutes() {
   const location = useLocation();
   const [setupRequired, setSetupRequired] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     api.setupRequired()
-      .then((res) => setSetupRequired(res.setup_required))
-      .catch(() => setSetupRequired(false))
+      .then((res) => {
+        setSetupRequired(res.setup_required);
+        setApiError(null);
+      })
+      .catch((err) => {
+        setSetupRequired(false);
+        setApiError(err.message || 'Backend unreachable');
+      })
       .finally(() => setChecking(false));
   }, []);
 
@@ -34,6 +41,18 @@ function AppRoutes() {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (apiError && !user) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-md w-full text-center">
+          <h1 className="text-xl font-semibold text-white mb-2">Cannot connect to backend</h1>
+          <p className="text-slate-400 text-sm mb-4">{apiError}</p>
+          <p className="text-slate-500 text-xs">Make sure the backend is running on localhost:3000</p>
+        </div>
       </div>
     );
   }

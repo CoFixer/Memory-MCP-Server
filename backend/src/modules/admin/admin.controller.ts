@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { IsEmail, IsString, IsOptional, IsEnum, IsNumber, IsBoolean, MinLength } from 'class-validator';
+import { IsEmail, IsString, IsOptional, IsEnum, IsNumber, IsBoolean, MinLength, IsUUID } from 'class-validator';
 import { AdminService } from './admin.service';
 import { EmbeddingConfigService } from '../embeddings/embedding-config.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -105,6 +105,48 @@ class UpdateEmbeddingProviderDto {
   is_default?: boolean;
 }
 
+class AdminCreateProjectDto {
+  @IsString()
+  name: string;
+
+  @IsString()
+  slug: string;
+
+  @IsUUID()
+  user_id: string;
+
+  @IsOptional()
+  @IsUUID()
+  workspace_id?: string;
+
+  @IsOptional()
+  @IsString()
+  git_remote?: string;
+
+  @IsOptional()
+  @IsString()
+  repository_url?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  prd_content?: string;
+}
+
+class AdminCreateApiKeyDto {
+  @IsString()
+  name: string;
+
+  @IsUUID()
+  user_id: string;
+
+  @IsOptional()
+  permissions?: string[];
+}
+
 @ApiTags('Admin')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -124,6 +166,7 @@ export class AdminController {
   }
 
   @Get('users')
+  @Roles(UserRole.ADMIN, UserRole.USER)
   @ApiOperation({ summary: 'List all users' })
   @ApiResponse({ status: 200, description: 'List of users' })
   async getUsers() {
@@ -131,6 +174,7 @@ export class AdminController {
   }
 
   @Post('users')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create user' })
   @ApiResponse({ status: 201, description: 'User created' })
   async createUser(@Body() dto: CreateUserDto) {
@@ -138,6 +182,7 @@ export class AdminController {
   }
 
   @Patch('users/:id')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update user' })
   @ApiResponse({ status: 200, description: 'User updated' })
   async updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
@@ -145,6 +190,7 @@ export class AdminController {
   }
 
   @Delete('users/:id')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete user' })
   @ApiResponse({ status: 200, description: 'User deleted' })
   async deleteUser(@Param('id') id: string) {
@@ -181,11 +227,32 @@ export class AdminController {
     return this.adminService.findAllProjects();
   }
 
+  @Post('projects')
+  @ApiOperation({ summary: 'Create project (admin)' })
+  @ApiResponse({ status: 201, description: 'Project created' })
+  async createProject(@Body() dto: AdminCreateProjectDto) {
+    return this.adminService.createProject(dto);
+  }
+
   @Get('api-keys')
   @ApiOperation({ summary: 'List all API keys' })
   @ApiResponse({ status: 200, description: 'List of API keys' })
   async getApiKeys() {
     return this.adminService.findAllApiKeys();
+  }
+
+  @Post('api-keys')
+  @ApiOperation({ summary: 'Create API key for any user (admin)' })
+  @ApiResponse({ status: 201, description: 'API key created' })
+  async createApiKey(@Body() dto: AdminCreateApiKeyDto) {
+    return this.adminService.createApiKey(dto);
+  }
+
+  @Delete('api-keys/:id')
+  @ApiOperation({ summary: 'Revoke API key (admin)' })
+  @ApiResponse({ status: 200, description: 'API key revoked' })
+  async revokeApiKey(@Param('id') id: string) {
+    return this.adminService.revokeApiKey(id);
   }
 
   @Get('workspaces')

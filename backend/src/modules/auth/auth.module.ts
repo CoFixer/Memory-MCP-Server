@@ -6,6 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
+import { CombinedAuthGuard } from './combined-auth.guard';
 import { ApiKey } from '../../database/entities/api-key.entity';
 import { User } from '../../database/entities/user.entity';
 import { UsersModule } from '../users/users.module';
@@ -24,8 +25,8 @@ import { UsersModule } from '../users/users.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, CombinedAuthGuard],
   controllers: [AuthController],
-  exports: [AuthService, PassportModule],
+  exports: [AuthService, PassportModule, JwtModule, CombinedAuthGuard, UsersModule],
 })
 export class AuthModule {}

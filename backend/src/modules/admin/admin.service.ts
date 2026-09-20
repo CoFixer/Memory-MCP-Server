@@ -2,10 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../../database/entities/user.entity';
-import { Memory } from '../../database/entities/memory.entity';
+import { Memory, MemoryScope, MemoryType } from '../../database/entities/memory.entity';
 import { Project } from '../../database/entities/project.entity';
 import { ApiKey } from '../../database/entities/api-key.entity';
 import { Workspace } from '../../database/entities/workspace.entity';
+import { MemoriesService } from '../memories/memories.service';
+import { ApiKeysService } from '../api-keys/api-keys.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -21,6 +23,8 @@ export class AdminService {
     private readonly apiKeyRepository: Repository<ApiKey>,
     @InjectRepository(Workspace)
     private readonly workspaceRepository: Repository<Workspace>,
+    private readonly memoriesService: MemoriesService,
+    private readonly apiKeysService: ApiKeysService,
   ) {}
 
   async getStats() {
@@ -159,5 +163,67 @@ export class AdminService {
       relations: ['user'],
       order: { created_at: 'DESC' },
     });
+  }
+
+  async createProject(data: {
+    name: string;
+    slug: string;
+    user_id: string;
+    workspace_id?: string;
+    git_remote?: string;
+    repository_url?: string;
+    description?: string;
+    prd_content?: string;
+  }) {
+    const user = await this.userRepository.findOne({ where: { id: data.user_id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const project = this.projectRepository.create({
+      user_id: data.user_id,
+      name: data.name,
+      slug: data.slug,
+      workspace_id: data.workspace_id || null,
+      git_remote: data.git_remote || null,
+      repository_url: data.repository_url || null,
+      description: data.description || null,
+    });
+    const saved = await this.projectRepository.save(project);
+
+    if (data.prd_content?.trim()) {
+      await this.memoriesService.create(data.user_id, {
+        content: data.prd_content.trim(),
+        title: `PRD: ${saved.name}`,
+        type: MemoryType.RULE,
+        scope: MemoryScope.PROJECT,
+        project_id: saved.id,
+        importance: 10,
+        source: 'prd-upload',
+      });
+    }
+
+    return saved;
+  }
+
+  async createApiKey(data: { name: string; user_id: string; permissions?: string[] }) {
+    const user = await this.userRepository.findOne({ where: { id: data.user_id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.apiKeysService.create(data.user_id, {
+      name: data.name,
+      permissions: data.permissions,
+    });
+  }
+
+  async revokeApiKey(id: string) {
+    const apiKey = await this.apiKeyRepository.findOne({ where: { id } });
+    if (!apiKey) {
+      throw new NotFoundException('API key not found');
+    }
+    apiKey.revoked_at = new Date();
+    await this.apiKeyRepository.save(apiKey);
+    return { success: true };
   }
 }

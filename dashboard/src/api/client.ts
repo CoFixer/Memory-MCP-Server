@@ -70,8 +70,18 @@ export const api = {
     return request(`/admin/memories${qs}`);
   },
   getProjects: () => request('/admin/projects'),
+  createProject: (data: any) => request('/admin/projects', { method: 'POST', body: JSON.stringify(data) }),
   getApiKeys: () => request('/admin/api-keys'),
+  createApiKey: (data: any) => request('/admin/api-keys', { method: 'POST', body: JSON.stringify(data) }),
+  revokeApiKey: (id: string) => request(`/admin/api-keys/${id}`, { method: 'DELETE' }),
   getWorkspaces: () => request('/admin/workspaces'),
+
+  // User-scoped endpoints (for normal users)
+  getMyProjects: () => request('/projects'),
+  createMyProject: (data: any) => request('/projects', { method: 'POST', body: JSON.stringify(data) }),
+  getMyApiKeys: () => request('/api-keys'),
+  createMyApiKey: (data: any) => request('/api-keys', { method: 'POST', body: JSON.stringify(data) }),
+  revokeMyApiKey: (id: string) => request(`/api-keys/${id}`, { method: 'DELETE' }),
 
   // Embedding Providers (admin only)
   getEmbeddingProviders: () => request('/admin/embedding-providers'),

@@ -15,6 +15,7 @@ import { OpenRouterProvider } from '../embeddings/providers/openrouter.provider'
 import { CacheModule } from '../cache/cache.module';
 import { AuditModule } from '../audit/audit.module';
 import { AuthModule } from '../auth/auth.module';
+import { MemoriesModule } from '../memories/memories.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from '../auth/auth.module';
     CacheModule,
     AuditModule,
     AuthModule,
+    MemoriesModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, EmbeddingConfigService, OllamaProvider, OpenAIProvider, OpenRouterProvider],

@@ -11,6 +11,7 @@ import {
 import { User } from './user.entity';
 import { Workspace } from './workspace.entity';
 import { Memory } from './memory.entity';
+import { ProjectAssignment } from './project-assignment.entity';
 
 @Entity('projects')
 export class Project {
@@ -57,4 +58,7 @@ export class Project {
 
   @OneToMany(() => Memory, (memory) => memory.project)
   memories: Memory[];
+
+  @OneToMany(() => ProjectAssignment, (assignment) => assignment.project)
+  assignments: ProjectAssignment[];
 }

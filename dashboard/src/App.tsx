@@ -12,9 +12,11 @@ import ApiKeys from './pages/ApiKeys';
 import Settings from './pages/Settings';
 import { api } from './api/client';
 
-function PrivateRoute({ children }: { children: React.ReactNode }) {
+function PrivateRoute({ children, adminOnly }: { children: React.ReactNode; adminOnly?: boolean }) {
   const { user } = useAuth();
-  return user ? <>{children}</> : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (adminOnly && user.role !== 'admin') return <Navigate to="/projects" replace />;
+  return <>{children}</>;
 }
 
 function AppRoutes() {
@@ -98,12 +100,24 @@ function AppRoutes() {
           </PrivateRoute>
         }
       >
-        <Route index element={<Dashboard />} />
-        <Route path="memories" element={<Memories />} />
+        <Route index element={
+          <PrivateRoute adminOnly>
+            <Dashboard />
+          </PrivateRoute>
+        } />
+        <Route path="memories" element={
+          <PrivateRoute adminOnly>
+            <Memories />
+          </PrivateRoute>
+        } />
         <Route path="users" element={<Users />} />
         <Route path="projects" element={<Projects />} />
         <Route path="api-keys" element={<ApiKeys />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="settings" element={
+          <PrivateRoute adminOnly>
+            <Settings />
+          </PrivateRoute>
+        } />
       </Route>
     </Routes>
   );

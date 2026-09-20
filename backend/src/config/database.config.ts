@@ -9,6 +9,7 @@ import { User } from '../database/entities/user.entity';
 import { AuditLog } from '../database/entities/audit-log.entity';
 import { MemoryVersion } from '../database/entities/memory-version.entity';
 import { EmbeddingProviderConfig } from '../database/entities/embedding-provider-config.entity';
+import { ProjectAssignment } from '../database/entities/project-assignment.entity';
 
 @Injectable()
 export class DatabaseConfig implements TypeOrmOptionsFactory {
@@ -27,6 +28,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
         AuditLog,
         MemoryVersion,
         EmbeddingProviderConfig,
+        ProjectAssignment,
       ],
       synchronize: this.configService.get<string>('NODE_ENV') !== 'production',
       logging: this.configService.get<string>('NODE_ENV') === 'development',

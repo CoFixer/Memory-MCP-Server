@@ -40,7 +40,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter basename="/dashboard">
+      <BrowserRouter basename={import.meta.env.VITE_BASENAME || '/'}>
         <AppRoutes />
       </BrowserRouter>
     </AuthProvider>

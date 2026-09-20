@@ -16,9 +16,14 @@ interface Stats {
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    api.getStats().then(setStats).finally(() => setLoading(false));
+    setError('');
+    api.getStats()
+      .then(setStats)
+      .catch((err) => setError(err.message || 'Failed to load stats'))
+      .finally(() => setLoading(false));
   }, []);
 
   const cards = [
@@ -35,6 +40,12 @@ export default function Dashboard() {
         <h1 className="text-3xl font-bold text-white mb-1">Dashboard</h1>
         <p className="text-slate-400">Overview of your Memory MCP Server</p>
       </div>
+
+      {error && (
+        <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {cards.map((card) => {

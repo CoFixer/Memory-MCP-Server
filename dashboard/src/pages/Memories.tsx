@@ -26,6 +26,7 @@ interface MemoryResponse {
 export default function Memories() {
   const [data, setData] = useState<MemoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [filters, setFilters] = useState({
     session_id: '',
     project_id: '',
@@ -34,15 +35,21 @@ export default function Memories() {
     type: '',
   });
 
-  const load = () => {
+  const load = (offset = 0) => {
     setLoading(true);
+    setError('');
     const params: Record<string, string> = {};
     if (filters.session_id) params.session_id = filters.session_id;
     if (filters.project_id) params.project_id = filters.project_id;
     if (filters.user_id) params.user_id = filters.user_id;
     if (filters.scope) params.scope = filters.scope;
     if (filters.type) params.type = filters.type;
-    api.getMemories(params).then(setData).finally(() => setLoading(false));
+    params.offset = String(offset);
+    params.limit = '20';
+    api.getMemories(params)
+      .then(setData)
+      .catch((err) => setError(err.message || 'Failed to load memories'))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -51,12 +58,28 @@ export default function Memories() {
 
   const handleSearch = () => load();
 
+  const handlePrev = () => {
+    if (!data) return;
+    load(Math.max(0, data.offset - data.limit));
+  };
+
+  const handleNext = () => {
+    if (!data) return;
+    load(data.offset + data.limit);
+  };
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-1">Memories</h1>
         <p className="text-slate-400">Browse and filter memories by session, project, and more</p>
       </div>
+
+      {error && (
+        <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 mb-6">
         <div className="flex flex-wrap gap-3">
@@ -178,14 +201,14 @@ export default function Memories() {
             <div className="flex gap-2">
               <button
                 disabled={data.offset === 0}
-                onClick={() => {}}
+                onClick={handlePrev}
                 className="px-3 py-1 rounded bg-slate-800 text-slate-300 text-xs disabled:opacity-30"
               >
                 Previous
               </button>
               <button
                 disabled={data.offset + data.limit >= data.total}
-                onClick={() => {}}
+                onClick={handleNext}
                 className="px-3 py-1 rounded bg-slate-800 text-slate-300 text-xs disabled:opacity-30"
               >
                 Next

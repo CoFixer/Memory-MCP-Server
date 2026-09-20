@@ -17,9 +17,14 @@ interface ApiKey {
 export default function ApiKeys() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    api.getApiKeys().then(setKeys).finally(() => setLoading(false));
+    setError('');
+    api.getApiKeys()
+      .then(setKeys)
+      .catch((err) => setError(err.message || 'Failed to load API keys'))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -28,6 +33,12 @@ export default function ApiKeys() {
         <h1 className="text-3xl font-bold text-white mb-1">API Keys</h1>
         <p className="text-slate-400">All API keys across users</p>
       </div>
+
+      {error && (
+        <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
         <table className="w-full text-sm text-left">

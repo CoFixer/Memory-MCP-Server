@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../../database/entities/user.entity';
@@ -85,7 +85,7 @@ export class AdminService {
     data: Partial<{ name: string; role: UserRole; password: string }>,
   ) {
     const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) return null;
+    if (!user) throw new NotFoundException('User not found');
     if (data.name !== undefined) user.name = data.name || null;
     if (data.role !== undefined) user.role = data.role;
     if (data.password) user.password_hash = await bcrypt.hash(data.password, 12);
@@ -97,7 +97,7 @@ export class AdminService {
 
   async deleteUser(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) return null;
+    if (!user) throw new NotFoundException('User not found');
     await this.userRepository.remove(user);
     return { success: true };
   }

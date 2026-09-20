@@ -8,9 +8,11 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { ApiKey } from '../../database/entities/api-key.entity';
 import { User } from '../../database/entities/user.entity';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
+    UsersModule,
     TypeOrmModule.forFeature([ApiKey, User]),
     PassportModule,
     JwtModule.registerAsync({

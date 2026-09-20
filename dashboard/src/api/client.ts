@@ -1,4 +1,7 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
+// Read API base URL from runtime config (injected by entrypoint.sh) or fallback to build-time env
+const API_BASE = (window as any).__RUNTIME_CONFIG__?.VITE_API_BASE_URL 
+  || import.meta.env.VITE_API_BASE_URL 
+  || 'http://localhost:3000/api/v1';
 
 function getToken() {
   return localStorage.getItem('token');

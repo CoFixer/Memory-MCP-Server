@@ -41,6 +41,9 @@ FROM nginx:alpine
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Copy .env file if it exists (for runtime config)
+RUN if [ -f .env ]; then cp .env /usr/share/nginx/html/; elif [ -f .env.example ]; then cp .env.example /usr/share/nginx/html/.env; fi
+
 # Copy custom entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

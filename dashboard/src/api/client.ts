@@ -7,6 +7,15 @@ function getToken() {
   return localStorage.getItem('token');
 }
 
+function extractErrorMessage(err: any): string {
+  if (typeof err?.message === 'string') return err.message;
+  if (Array.isArray(err?.message)) return err.message.join('; ');
+  if (typeof err?.message?.message === 'string') return err.message.message;
+  if (Array.isArray(err?.message?.message)) return err.message.message.join('; ');
+  if (typeof err?.error === 'string') return err.error;
+  return 'Something went wrong';
+}
+
 async function request(path: string, options: RequestInit = {}) {
   const url = `${API_BASE}${path}`;
   const headers: Record<string, string> = {
@@ -31,7 +40,7 @@ async function request(path: string, options: RequestInit = {}) {
       throw new Error('Backend returned HTML instead of JSON. Is the backend running?');
     }
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `HTTP ${res.status}`);
+    throw new Error(extractErrorMessage(err) || `HTTP ${res.status}`);
   }
   const contentType = res.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {

@@ -36,6 +36,8 @@ export const api = {
     request('/auth/setup-required'),
   setupAdmin: (data: { email: string; password: string; name?: string; username?: string }) =>
     request('/auth/setup', { method: 'POST', body: JSON.stringify(data) }),
+  resetSetup: () =>
+    request('/auth/reset-setup', { method: 'POST' }),
 
   getStats: () => request('/admin/stats'),
   getUsers: () => request('/admin/users'),

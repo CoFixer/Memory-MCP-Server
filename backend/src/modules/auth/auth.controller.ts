@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body } from '@nestjs/common';
+import { Controller, Post, Get, Body, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 
@@ -40,5 +40,15 @@ export class AuthController {
   @ApiResponse({ status: 409, description: 'Admin already exists' })
   async setup(@Body() dto: SetupDto) {
     return this.authService.setupAdmin(dto.email, dto.password, dto.name, dto.username);
+  }
+
+  @Post('reset-setup')
+  @ApiOperation({ summary: 'Reset setup - DEVELOPMENT ONLY' })
+  @ApiResponse({ status: 200, description: 'All users cleared' })
+  async resetSetup() {
+    if (process.env.NODE_ENV === 'production') {
+      throw new UnauthorizedException('Not allowed in production');
+    }
+    return this.authService.resetSetup();
   }
 }

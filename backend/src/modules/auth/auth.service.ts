@@ -67,6 +67,11 @@ export class AuthService {
     return adminCount === 0;
   }
 
+  async resetSetup(): Promise<{ success: boolean; message: string }> {
+    await this.userRepository.clear();
+    return { success: true, message: 'All users cleared. Setup required.' };
+  }
+
   async setupAdmin(email: string, password: string, name?: string, username?: string) {
     const existingAdmin = await this.userRepository.count({ where: { role: UserRole.ADMIN } });
     if (existingAdmin > 0) {

@@ -10,6 +10,16 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
+  const allowOrigins = configService.get<string>('ALLOW_ORIGINS');
+  const allowedOrigins = allowOrigins
+    ? allowOrigins.split(',').map((o) => o.trim())
+    : true;
+
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+  });
+
   app.setGlobalPrefix('api/v1', {
     exclude: ['/', '/health', '/health/{*path}', '/mcp', '/dashboard', '/dashboard/{*path}'],
   });

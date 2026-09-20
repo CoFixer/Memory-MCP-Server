@@ -38,14 +38,8 @@ RUN bun run build
 # ============================================
 FROM nginx:alpine
 
-# Install envsubst support (usually present, but ensure it exists)
-RUN apk add --no-cache gettext
-
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration as a template for envsubst
-COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # Copy custom entrypoint
 COPY entrypoint.sh /entrypoint.sh
@@ -54,8 +48,5 @@ RUN chmod +x /entrypoint.sh
 # Expose HTTP port
 EXPOSE 8080
 
-# Use custom entrypoint (validates env var then runs nginx's default entrypoint)
+# Use custom entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
-
-# Default command passed to docker-entrypoint.sh
-CMD ["nginx", "-g", "daemon off;"]

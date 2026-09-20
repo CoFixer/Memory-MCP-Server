@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { EmbeddingConfigService } from './embedding-config.service';
 import { EmbeddingProvider } from './embedding-provider.interface';
 
@@ -9,7 +9,7 @@ export class EmbeddingService {
   private async getProvider(): Promise<EmbeddingProvider> {
     const config = await this.configService.getActiveConfig();
     if (!config) {
-      throw new Error('No active embedding provider configured');
+      throw new ServiceUnavailableException('No active embedding provider configured');
     }
     return this.configService.configureProvider(config);
   }

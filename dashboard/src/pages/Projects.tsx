@@ -17,9 +17,14 @@ interface Project {
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    api.getProjects().then(setProjects).finally(() => setLoading(false));
+    setError('');
+    api.getProjects()
+      .then(setProjects)
+      .catch((err) => setError(err.message || 'Failed to load projects'))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -28,6 +33,12 @@ export default function Projects() {
         <h1 className="text-3xl font-bold text-white mb-1">Projects</h1>
         <p className="text-slate-400">All registered projects</p>
       </div>
+
+      {error && (
+        <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
         <table className="w-full text-sm text-left">

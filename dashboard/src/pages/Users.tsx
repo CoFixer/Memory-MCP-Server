@@ -18,10 +18,15 @@ export default function UsersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ email: '', password: '', name: '', role: 'user' });
   const [editForm, setEditForm] = useState({ name: '', role: 'user', password: '' });
+  const [error, setError] = useState('');
 
   const load = () => {
     setLoading(true);
-    api.getUsers().then(setUsers).finally(() => setLoading(false));
+    setError('');
+    api.getUsers()
+      .then(setUsers)
+      .catch((err) => setError(err.message || 'Failed to load users'))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -29,27 +34,42 @@ export default function UsersPage() {
   }, []);
 
   const handleCreate = async () => {
-    await api.createUser(form);
-    setShowForm(false);
-    setForm({ email: '', password: '', name: '', role: 'user' });
-    load();
+    setError('');
+    try {
+      await api.createUser(form);
+      setShowForm(false);
+      setForm({ email: '', password: '', name: '', role: 'user' });
+      load();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create user');
+    }
   };
 
   const handleUpdate = async (id: string) => {
-    const data: any = {};
-    if (editForm.name) data.name = editForm.name;
-    if (editForm.role) data.role = editForm.role;
-    if (editForm.password) data.password = editForm.password;
-    await api.updateUser(id, data);
-    setEditingId(null);
-    setEditForm({ name: '', role: 'user', password: '' });
-    load();
+    setError('');
+    try {
+      const data: any = {};
+      if (editForm.name !== '') data.name = editForm.name;
+      if (editForm.role !== '') data.role = editForm.role;
+      if (editForm.password) data.password = editForm.password;
+      await api.updateUser(id, data);
+      setEditingId(null);
+      setEditForm({ name: '', role: 'user', password: '' });
+      load();
+    } catch (err: any) {
+      setError(err.message || 'Failed to update user');
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this user?')) return;
-    await api.deleteUser(id);
-    load();
+    setError('');
+    try {
+      await api.deleteUser(id);
+      load();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete user');
+    }
   };
 
   return (
@@ -67,6 +87,12 @@ export default function UsersPage() {
           Add User
         </button>
       </div>
+
+      {error && (
+        <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       {showForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-6">

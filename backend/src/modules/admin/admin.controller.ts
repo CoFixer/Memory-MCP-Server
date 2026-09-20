@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { IsEmail, IsString, IsOptional, IsEnum, IsNumber, IsBoolean, MinLength } from 'class-validator';
 import { AdminService } from './admin.service';
 import { EmbeddingConfigService } from '../embeddings/embedding-config.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -9,37 +10,98 @@ import { UserRole } from '../../database/entities/user.entity';
 import { EmbeddingProviderType } from '../../database/entities/embedding-provider-config.entity';
 
 class CreateUserDto {
+  @IsEmail()
   email: string;
+
+  @IsString()
+  @MinLength(6)
   password: string;
+
+  @IsOptional()
+  @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsEnum(UserRole)
   role?: UserRole;
 }
 
 class UpdateUserDto {
+  @IsOptional()
+  @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsEnum(UserRole)
   role?: UserRole;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
   password?: string;
 }
 
 class CreateEmbeddingProviderDto {
+  @IsString()
   name: string;
+
+  @IsEnum(EmbeddingProviderType)
   provider: EmbeddingProviderType;
+
+  @IsString()
   model: string;
+
+  @IsOptional()
+  @IsString()
   base_url?: string;
+
+  @IsOptional()
+  @IsString()
   api_key?: string;
+
+  @IsNumber()
   dimensions: number;
+
+  @IsOptional()
+  @IsBoolean()
   is_active?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   is_default?: boolean;
 }
 
 class UpdateEmbeddingProviderDto {
+  @IsOptional()
+  @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsEnum(EmbeddingProviderType)
   provider?: EmbeddingProviderType;
+
+  @IsOptional()
+  @IsString()
   model?: string;
+
+  @IsOptional()
+  @IsString()
   base_url?: string | null;
+
+  @IsOptional()
+  @IsString()
   api_key?: string | null;
+
+  @IsOptional()
+  @IsNumber()
   dimensions?: number;
+
+  @IsOptional()
+  @IsBoolean()
   is_active?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   is_default?: boolean;
 }
 
@@ -98,8 +160,8 @@ export class AdminController {
     @Query('user_id') user_id?: string,
     @Query('scope') scope?: string,
     @Query('type') type?: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {
     return this.adminService.findAllMemories({
       session_id,
@@ -107,8 +169,8 @@ export class AdminController {
       user_id,
       scope,
       type,
-      limit: limit ? parseInt(limit, 10) : undefined,
-      offset: offset ? parseInt(offset, 10) : undefined,
+      limit,
+      offset,
     });
   }
 

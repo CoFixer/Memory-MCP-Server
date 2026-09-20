@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -43,7 +43,7 @@ export class EmbeddingConfigService implements OnModuleInit {
   ) {
     this.encryptionSecret = this.configService.get<string>('API_KEY_SECRET', '');
     if (!this.encryptionSecret || this.encryptionSecret.length < 32) {
-      throw new Error('API_KEY_SECRET must be at least 32 characters for encryption');
+      throw new ServiceUnavailableException('API_KEY_SECRET must be at least 32 characters for encryption');
     }
   }
 
@@ -122,7 +122,7 @@ export class EmbeddingConfigService implements OnModuleInit {
         return this.ollamaProvider;
       case EmbeddingProviderType.OPENAI:
         if (!config.apiKey) {
-          throw new Error('OpenAI provider requires an API key');
+          throw new BadRequestException('OpenAI provider requires an API key');
         }
         this.openAIProvider.setConfig({
           apiKey: config.apiKey,
@@ -132,7 +132,7 @@ export class EmbeddingConfigService implements OnModuleInit {
         return this.openAIProvider;
       case EmbeddingProviderType.OPENROUTER:
         if (!config.apiKey) {
-          throw new Error('OpenRouter provider requires an API key');
+          throw new BadRequestException('OpenRouter provider requires an API key');
         }
         this.openRouterProvider.setConfig({
           apiKey: config.apiKey,
@@ -142,7 +142,7 @@ export class EmbeddingConfigService implements OnModuleInit {
         } as OpenRouterProviderConfig);
         return this.openRouterProvider;
       default:
-        throw new Error(`Unknown embedding provider: ${config.provider}`);
+        throw new BadRequestException(`Unknown embedding provider: ${config.provider}`);
     }
   }
 

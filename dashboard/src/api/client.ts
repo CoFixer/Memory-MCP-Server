@@ -50,8 +50,8 @@ async function request(path: string, options: RequestInit = {}) {
 }
 
 export const api = {
-  login: (email: string, password: string) =>
-    request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  login: (identifier: string, password: string) =>
+    request('/auth/login', { method: 'POST', body: JSON.stringify({ identifier, password }) }),
   setupRequired: () =>
     request('/auth/setup-required'),
   setupAdmin: (data: { email: string; password: string; name?: string; username?: string }) =>

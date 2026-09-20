@@ -1,5 +1,5 @@
 export declare const api: {
-    login: (email: string, password: string) => Promise<any>;
+    login: (identifier: string, password: string) => Promise<any>;
     register: (email: string, password: string, name?: string) => Promise<any>;
     getStats: () => Promise<any>;
     getUsers: () => Promise<any>;

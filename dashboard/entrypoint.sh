@@ -16,6 +16,9 @@ fi
 # Remove trailing slash if present
 BACKEND_URL=$(echo "$BACKEND_URL" | sed 's:/$::')
 
+# Remove /api/v1 from the end if user included it (prevents double paths)
+BACKEND_URL=$(echo "$BACKEND_URL" | sed 's|/api/v1$||')
+
 echo "✅ Dashboard configured with backend: ${BACKEND_URL}"
 
 # Inject runtime config into index.html
@@ -27,6 +30,14 @@ if grep -q '</head>' "$INDEX_FILE"; then
   echo "✅ Runtime config injected into index.html"
 else
   echo "⚠️  Warning: Could not find </head> tag in index.html"
+fi
+
+# Verify injection
+if grep -q '__RUNTIME_CONFIG__' "$INDEX_FILE"; then
+  echo "✅ Verified: Runtime config is in index.html"
+  grep '__RUNTIME_CONFIG__' "$INDEX_FILE" | head -1
+else
+  echo "⚠️  Warning: Runtime config injection failed"
 fi
 
 # Generate nginx config

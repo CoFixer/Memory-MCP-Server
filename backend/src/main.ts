@@ -11,14 +11,38 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   const allowOrigins = configService.get<string>('ALLOW_ORIGINS');
-  const allowedOrigins = allowOrigins
-    ? allowOrigins.split(',').map((o) => o.trim())
-    : true;
+  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+  const baseUrlStr = configService.get<string>('BASE_URL', '');
+
+  let allowedOrigins: any = true;
+
+  if (allowOrigins) {
+    allowedOrigins = allowOrigins.split(',').map((o) => o.trim());
+  } else if (nodeEnv === 'production' && baseUrlStr) {
+    try {
+      const url = new URL(baseUrlStr);
+      const domain = url.hostname;
+      allowedOrigins = [
+        baseUrlStr,
+        `https://admin.${domain}`,
+        `https://dashboard.${domain}`,
+        `https://app.${domain}`,
+        `http://localhost:3000`,
+        `http://localhost:5173`,
+      ];
+    } catch {
+      // If BASE_URL is not a valid URL, allow all
+    }
+  }
 
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS', 'PUT'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin'],
   });
+
+  console.log(`🔒 CORS allowed origins: ${JSON.stringify(allowedOrigins)}`);
 
   app.setGlobalPrefix('api/v1', {
     exclude: ['/', '/health', '/health/{*path}', '/mcp', '/dashboard', '/dashboard/{*path}'],

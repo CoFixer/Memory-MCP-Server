@@ -4,7 +4,42 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import TagInput from '../components/TagInput';
+import CheckboxGroup from '../components/CheckboxGroup';
 import { Loader2, FileText, X, ArrowLeft, Sparkles, Wand2 } from 'lucide-react';
+
+const TECH_STACK_OPTIONS = [
+  'React', 'Vue', 'Angular', 'Svelte', 'Next.js', 'Nuxt',
+  'Node.js', 'NestJS', 'Express',
+  'Python', 'Django', 'FastAPI',
+  'Go', 'Rust', 'Java', 'Spring', '.NET',
+  'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Prisma',
+  'Docker', 'Kubernetes', 'AWS', 'Vercel', 'Netlify',
+  'React Native', 'Flutter',
+  'OpenAI', 'LangChain', 'TensorFlow',
+];
+
+const PROJECT_TYPE_OPTIONS = [
+  'Web Application',
+  'Mobile App',
+  'API Service',
+  'CLI Tool',
+  'Library / Package',
+  'AI / ML Application',
+  'DevOps / Infrastructure',
+  'Internal Tool',
+];
+
+const DEPLOYMENT_OPTIONS = [
+  'Docker',
+  'Kubernetes',
+  'AWS',
+  'GCP',
+  'Azure',
+  'Vercel',
+  'Netlify',
+  'Self-hosted',
+  'Serverless',
+];
 
 export default function CreateProject() {
   const navigate = useNavigate();
@@ -18,17 +53,12 @@ export default function CreateProject() {
   const [form, setForm] = useState({
     name: '',
     slug: '',
-    description: '',
-    git_remote: '',
-    repository_url: '',
     summary: '',
     product_type: [] as string[],
     target_users: [] as string[],
     business_goals: [] as string[],
     preferred_stack: [] as string[],
     deployment_target: [] as string[],
-    known_modules: [] as string[],
-    known_integrations: [] as string[],
     constraints: [] as string[],
     additional_notes: '',
   });
@@ -71,15 +101,12 @@ export default function CreateProject() {
     try {
       const result = await api.generatePrd({
         name: form.name,
-        description: form.description,
         summary: form.summary,
         product_type: form.product_type,
         target_users: form.target_users,
         business_goals: form.business_goals,
         preferred_stack: form.preferred_stack,
         deployment_target: form.deployment_target,
-        known_modules: form.known_modules,
-        known_integrations: form.known_integrations,
         constraints: form.constraints,
         additional_notes: form.additional_notes,
       });
@@ -90,17 +117,12 @@ export default function CreateProject() {
         ...prev,
         name: suggestions.name || prev.name,
         slug: suggestions.slug || prev.slug || generateSlug(suggestions.name || prev.name),
-        description: suggestions.description || prev.description,
-        git_remote: suggestions.git_remote || prev.git_remote,
-        repository_url: suggestions.repository_url || prev.repository_url,
         summary: suggestions.summary || prev.summary,
         product_type: suggestions.product_type?.length ? suggestions.product_type : prev.product_type,
         target_users: suggestions.target_users?.length ? suggestions.target_users : prev.target_users,
         business_goals: suggestions.business_goals?.length ? suggestions.business_goals : prev.business_goals,
         preferred_stack: suggestions.preferred_stack?.length ? suggestions.preferred_stack : prev.preferred_stack,
         deployment_target: suggestions.deployment_target?.length ? suggestions.deployment_target : prev.deployment_target,
-        known_modules: suggestions.known_modules?.length ? suggestions.known_modules : prev.known_modules,
-        known_integrations: suggestions.known_integrations?.length ? suggestions.known_integrations : prev.known_integrations,
         constraints: suggestions.constraints?.length ? suggestions.constraints : prev.constraints,
         additional_notes: suggestions.additional_notes || prev.additional_notes,
       }));
@@ -129,17 +151,12 @@ export default function CreateProject() {
       const payload: any = {
         name: form.name.trim(),
         slug: form.slug.trim(),
-        description: form.description.trim() || undefined,
-        git_remote: form.git_remote.trim() || undefined,
-        repository_url: form.repository_url.trim() || undefined,
         summary: form.summary.trim() || undefined,
         product_type: form.product_type.join(', ') || undefined,
         target_users: form.target_users.join(', ') || undefined,
         business_goals: form.business_goals.join(', ') || undefined,
         preferred_stack: form.preferred_stack.join(', ') || undefined,
         deployment_target: form.deployment_target.join(', ') || undefined,
-        known_modules: form.known_modules.join(', ') || undefined,
-        known_integrations: form.known_integrations.join(', ') || undefined,
         constraints: form.constraints.join(', ') || undefined,
         additional_notes: form.additional_notes.trim() || undefined,
         ...(prdContent.trim() ? { prd_content: prdContent.trim() } : {}),
@@ -177,7 +194,7 @@ export default function CreateProject() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">Create Project</h1>
-          <p className="text-slate-400 text-sm">Set up a new project and optionally generate a PRD</p>
+          <p className="text-slate-400 text-sm">Define a memory space for your OpenCode project</p>
         </div>
       </div>
 
@@ -196,7 +213,7 @@ export default function CreateProject() {
               <label className="text-xs font-medium text-slate-400">Project Name *</label>
               <input
                 type="text"
-                placeholder="e.g. My Awesome App"
+                placeholder="e.g. E-commerce API"
                 value={form.name}
                 onChange={(e) => {
                   const name = e.target.value;
@@ -213,51 +230,21 @@ export default function CreateProject() {
               <label className="text-xs font-medium text-slate-400">Slug *</label>
               <input
                 type="text"
-                placeholder="my-awesome-app"
+                placeholder="e-commerce-api"
                 value={form.slug}
                 onChange={(e) => updateField('slug', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400">Git Remote URL</label>
-              <input
-                type="text"
-                placeholder="https://github.com/user/repo.git"
-                value={form.git_remote}
-                onChange={(e) => updateField('git_remote', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400">Repository URL</label>
-              <input
-                type="text"
-                placeholder="https://github.com/user/repo"
-                value={form.repository_url}
-                onChange={(e) => updateField('repository_url', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-            <div className="space-y-1 md:col-span-2">
-              <label className="text-xs font-medium text-slate-400">Description</label>
-              <input
-                type="text"
-                placeholder="Short description of the project"
-                value={form.description}
-                onChange={(e) => updateField('description', e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
         </section>
 
-        {/* PRD Generation */}
+        {/* Project Context */}
         <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary-400" />
-              <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">PRD Generation</h2>
+              <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Project Context</h2>
             </div>
             <button
               onClick={handleGeneratePrd}
@@ -270,7 +257,7 @@ export default function CreateProject() {
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-400">Project Summary *</label>
               <textarea
@@ -282,21 +269,40 @@ export default function CreateProject() {
               />
             </div>
 
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-400">Project Type</label>
+              <CheckboxGroup
+                options={PROJECT_TYPE_OPTIONS}
+                selected={form.product_type}
+                onChange={(tags) => updateField('product_type', tags)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-400">Tech Stack</label>
+              <CheckboxGroup
+                options={TECH_STACK_OPTIONS}
+                selected={form.preferred_stack}
+                onChange={(tags) => updateField('preferred_stack', tags)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-400">Deployment Target</label>
+              <CheckboxGroup
+                options={DEPLOYMENT_OPTIONS}
+                selected={form.deployment_target}
+                onChange={(tags) => updateField('deployment_target', tags)}
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400">Product Type</label>
-                <TagInput
-                  tags={form.product_type}
-                  onChange={(tags) => updateField('product_type', tags)}
-                  placeholder="e.g. web-app, api-service, mobile-app"
-                />
-              </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-400">Target Users</label>
                 <TagInput
                   tags={form.target_users}
                   onChange={(tags) => updateField('target_users', tags)}
-                  placeholder="e.g. developers, small-business, enterprise"
+                  placeholder="e.g. developers, small-business"
                 />
               </div>
               <div className="space-y-1">
@@ -304,49 +310,18 @@ export default function CreateProject() {
                 <TagInput
                   tags={form.business_goals}
                   onChange={(tags) => updateField('business_goals', tags)}
-                  placeholder="e.g. automate-invoicing, reduce-support-tickets"
+                  placeholder="e.g. automate-invoicing"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400">Preferred Stack</label>
-                <TagInput
-                  tags={form.preferred_stack}
-                  onChange={(tags) => updateField('preferred_stack', tags)}
-                  placeholder="e.g. NestJS, PostgreSQL, React, Docker"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400">Deployment Target</label>
-                <TagInput
-                  tags={form.deployment_target}
-                  onChange={(tags) => updateField('deployment_target', tags)}
-                  placeholder="e.g. Docker, Dokploy, AWS, Vercel"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400">Known Modules</label>
-                <TagInput
-                  tags={form.known_modules}
-                  onChange={(tags) => updateField('known_modules', tags)}
-                  placeholder="e.g. auth, billing, notifications"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400">Known Integrations</label>
-                <TagInput
-                  tags={form.known_integrations}
-                  onChange={(tags) => updateField('known_integrations', tags)}
-                  placeholder="e.g. Stripe, SendGrid, Slack"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400">Constraints</label>
-                <TagInput
-                  tags={form.constraints}
-                  onChange={(tags) => updateField('constraints', tags)}
-                  placeholder="e.g. gdpr, hipaa, budget-limit"
-                />
-              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-400">Constraints</label>
+              <TagInput
+                tags={form.constraints}
+                onChange={(tags) => updateField('constraints', tags)}
+                placeholder="e.g. gdpr, budget-limit"
+              />
             </div>
 
             <div className="space-y-1">
@@ -362,7 +337,7 @@ export default function CreateProject() {
           </div>
         </section>
 
-        {/* PRD Upload */}
+        {/* PRD Document */}
         <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
           <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-4">PRD Document</h2>
           <div className="flex items-center gap-3">
@@ -396,7 +371,7 @@ export default function CreateProject() {
             </div>
           )}
           <p className="text-xs text-slate-500 mt-2">
-            Upload an existing PRD markdown file. It will be stored as a project-scoped memory so OpenCode can follow it with AREG.
+            Upload an existing PRD or generate one above. It will be stored as a project-scoped memory.
           </p>
         </section>
 

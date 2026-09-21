@@ -25,12 +25,7 @@ export class CreateProjectDto {
   @IsString()
   repository_url?: string;
 
-  @ApiPropertyOptional({ description: 'Short description' })
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @ApiPropertyOptional({ description: 'Project summary for PRD generation' })
+  @ApiPropertyOptional({ description: 'Project summary' })
   @IsOptional()
   @IsString()
   summary?: string;

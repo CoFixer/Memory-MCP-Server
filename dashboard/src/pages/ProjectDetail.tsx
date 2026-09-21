@@ -3,15 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Loader2, ArrowLeft, ExternalLink, GitBranch, Calendar, User, Building2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Calendar, User, Building2 } from 'lucide-react';
 
 interface Project {
   id: string;
   name: string;
   slug: string;
   description: string | null;
-  git_remote: string | null;
-  repository_url: string | null;
   created_at: string;
   updated_at: string;
   user?: { email: string; name: string | null };
@@ -78,21 +76,9 @@ export default function ProjectDetail() {
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-800">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-white mb-1">{project.name}</h1>
-              <p className="text-slate-400 text-sm">{project.slug}</p>
-            </div>
-            {project.repository_url && (
-              <a
-                href={project.repository_url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-primary-400 text-sm rounded-lg transition-colors"
-              >
-                Repository <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            )}
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-1">{project.name}</h1>
+            <p className="text-slate-400 text-sm">{project.slug}</p>
           </div>
         </div>
 
@@ -105,16 +91,6 @@ export default function ProjectDetail() {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {project.git_remote && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-800">
-                <GitBranch className="w-4 h-4 text-slate-500" />
-                <div>
-                  <p className="text-xs text-slate-500">Git Remote</p>
-                  <p className="text-sm text-slate-300 font-mono truncate max-w-[200px]">{project.git_remote}</p>
-                </div>
-              </div>
-            )}
-
             {isAdmin && project.user && (
               <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-800">
                 <User className="w-4 h-4 text-slate-500" />

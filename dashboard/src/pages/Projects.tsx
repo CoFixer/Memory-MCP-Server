@@ -2,15 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, ExternalLink, Plus, ArrowRight } from 'lucide-react';
+import { Loader2, Plus, ArrowRight } from 'lucide-react';
 
 interface Project {
   id: string;
   name: string;
   slug: string;
   description: string | null;
-  git_remote: string | null;
-  repository_url: string | null;
   created_at: string;
   user?: { email: string };
   workspace?: { name: string };
@@ -69,7 +67,6 @@ export default function Projects() {
               <th className="px-6 py-3">Name</th>
               <th className="px-6 py-3">Slug</th>
               <th className="px-6 py-3">Description</th>
-              <th className="px-6 py-3">Repository</th>
               {isAdmin && <th className="px-6 py-3">Workspace</th>}
               {isAdmin && <th className="px-6 py-3">Owner</th>}
               <th className="px-6 py-3">Created</th>
@@ -79,7 +76,7 @@ export default function Projects() {
           <tbody className="divide-y divide-slate-800">
             {loading ? (
               <tr>
-                <td colSpan={isAdmin ? 8 : 6} className="px-6 py-8 text-center">
+                <td colSpan={isAdmin ? 6 : 4} className="px-6 py-8 text-center">
                   <Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-500" />
                 </td>
               </tr>
@@ -96,15 +93,6 @@ export default function Projects() {
                   </td>
                   <td className="px-6 py-4 text-slate-400">{p.slug}</td>
                   <td className="px-6 py-4 text-slate-400 max-w-xs truncate">{p.description || '-'}</td>
-                  <td className="px-6 py-4">
-                    {p.repository_url ? (
-                      <a href={p.repository_url} target="_blank" rel="noreferrer" className="text-primary-400 hover:text-primary-300 flex items-center gap-1">
-                        Link <ExternalLink className="w-3 h-3" />
-                      </a>
-                    ) : (
-                      <span className="text-slate-600">-</span>
-                    )}
-                  </td>
                   {isAdmin && <td className="px-6 py-4 text-slate-400">{p.workspace?.name || '-'}</td>}
                   {isAdmin && <td className="px-6 py-4 text-slate-400">{p.user?.email || '-'}</td>}
                   <td className="px-6 py-4 text-slate-500">{new Date(p.created_at).toLocaleDateString()}</td>
@@ -120,7 +108,7 @@ export default function Projects() {
               ))
             ) : (
               <tr>
-                <td colSpan={isAdmin ? 8 : 6} className="px-6 py-8 text-center text-slate-500">No projects found</td>
+                <td colSpan={isAdmin ? 6 : 4} className="px-6 py-8 text-center text-slate-500">No projects found</td>
               </tr>
             )}
           </tbody>

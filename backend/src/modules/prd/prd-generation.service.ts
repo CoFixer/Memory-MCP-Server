@@ -113,9 +113,10 @@ ${fields || 'No specific details provided yet.'}
 Requirements:
 1. The PRD must be in Markdown format and follow software development best practices.
 2. Include sections: Overview, Goals, Non-Goals, User Stories, Functional Requirements, Non-Functional Requirements, API Design (if applicable), Data Model, Architecture Overview, Security Considerations, Deployment Strategy, Milestones / Roadmap, Open Questions.
-3. Use clear, actionable language suitable for developers.
-4. For any fields not provided above, suggest reasonable values based on the project context.
-5. Return ONLY a JSON object with this exact shape:
+3. In the Architecture Overview (or Technology Stack) section, clearly categorize the tech stack into groups such as: Frontend, Backend, Database, Cache & Queue, DevOps, Mobile, and AI / ML. This helps developers quickly understand the stack structure.
+4. Use clear, actionable language suitable for developers.
+5. For any fields not provided above, suggest reasonable values based on the project context.
+6. Return ONLY a JSON object with this exact shape:
 
 {
   "prd_content": "string (full markdown PRD)",

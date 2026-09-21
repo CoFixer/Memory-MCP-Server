@@ -235,31 +235,76 @@ export default function CreateProject() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const renderChipRow = (label: string, key: keyof typeof form, _options: string[]) => {
+  const renderChipRow = (label: string, key: keyof typeof form, _options: string[], sections?: Record<string, string[]>) => {
     const values = form[key] as string[];
     const hasValues = values.length > 0;
+
+    const renderFlatChips = () => (
+      <div className="flex flex-wrap items-center gap-2">
+        {values.map((v) => (
+          <span
+            key={v}
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-primary-500/10 text-primary-400 border border-primary-500/20 rounded-md"
+          >
+            {v}
+          </span>
+        ))}
+        <button
+          type="button"
+          onClick={() => openModal(key, values)}
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-white border border-slate-700 rounded-md hover:bg-slate-800 transition-colors"
+        >
+          <Pencil className="w-3 h-3" /> Edit
+        </button>
+      </div>
+    );
+
+    const renderSectionedChips = () => {
+      if (!sections) return renderFlatChips();
+      const sectionMap = new Map<string, string[]>();
+      values.forEach((v) => {
+        for (const [sectionTitle, opts] of Object.entries(sections)) {
+          if (opts.includes(v)) {
+            if (!sectionMap.has(sectionTitle)) sectionMap.set(sectionTitle, []);
+            sectionMap.get(sectionTitle)!.push(v);
+            break;
+          }
+        }
+      });
+
+      return (
+        <div className="space-y-3">
+          {Array.from(sectionMap.entries()).map(([sectionTitle, opts]) => (
+            <div key={sectionTitle} className="space-y-1.5">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{sectionTitle}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                {opts.map((v) => (
+                  <span
+                    key={v}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-primary-500/10 text-primary-400 border border-primary-500/20 rounded-md"
+                  >
+                    {v}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => openModal(key, values)}
+            className="inline-flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-white border border-slate-700 rounded-md hover:bg-slate-800 transition-colors"
+          >
+            <Pencil className="w-3 h-3" /> Edit
+          </button>
+        </div>
+      );
+    };
 
     return (
       <div className="space-y-2">
         <label className="text-xs font-medium text-slate-400">{label}</label>
         {hasValues ? (
-          <div className="flex flex-wrap items-center gap-2">
-            {values.map((v) => (
-              <span
-                key={v}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-primary-500/10 text-primary-400 border border-primary-500/20 rounded-md"
-              >
-                {v}
-              </span>
-            ))}
-            <button
-              type="button"
-              onClick={() => openModal(key, values)}
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-white border border-slate-700 rounded-md hover:bg-slate-800 transition-colors"
-            >
-              <Pencil className="w-3 h-3" /> Edit
-            </button>
-          </div>
+          sections ? renderSectionedChips() : renderFlatChips()
         ) : (
           <button
             type="button"
@@ -461,7 +506,7 @@ export default function CreateProject() {
             </div>
 
             {renderChipRow('Project Type', 'product_type', PROJECT_TYPE_OPTIONS)}
-            {renderChipRow('Tech Stack', 'preferred_stack', TECH_STACK_OPTIONS)}
+            {renderChipRow('Tech Stack', 'preferred_stack', TECH_STACK_OPTIONS, TECH_STACK_SECTIONS)}
             {renderChipRow('Deployment Target', 'deployment_target', DEPLOYMENT_OPTIONS)}
             {renderChipRow('Target Users', 'target_users', TARGET_USERS_OPTIONS)}
             {renderChipRow('Business Goals', 'business_goals', BUSINESS_GOALS_OPTIONS)}

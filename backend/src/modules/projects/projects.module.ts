@@ -9,9 +9,10 @@ import { ProjectAssignment } from '../../database/entities/project-assignment.en
 import { ApiKeysModule } from '../api-keys/api-keys.module';
 import { AuthModule } from '../auth/auth.module';
 import { MemoriesModule } from '../memories/memories.module';
+import { PrdModule } from '../prd/prd.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Project, User, Workspace, ProjectAssignment]), ApiKeysModule, AuthModule, MemoriesModule],
+  imports: [TypeOrmModule.forFeature([Project, User, Workspace, ProjectAssignment]), ApiKeysModule, AuthModule, MemoriesModule, PrdModule],
   controllers: [ProjectsController],
   providers: [ProjectsService],
   exports: [ProjectsService],

@@ -92,6 +92,7 @@ export const api = {
   getMyProjects: () => request('/projects'),
   getMyProject: (id: string) => request(`/projects/${id}`),
   createMyProject: (data: any) => request('/projects', { method: 'POST', body: JSON.stringify(data) }),
+  generatePrd: (data: any) => request('/projects/generate-prd', { method: 'POST', body: JSON.stringify(data) }),
   getMyApiKeys: () => request('/api-keys'),
   createMyApiKey: (data: any) => request('/api-keys', { method: 'POST', body: JSON.stringify(data) }),
   revokeMyApiKey: (id: string) => request(`/api-keys/${id}`, { method: 'DELETE' }),

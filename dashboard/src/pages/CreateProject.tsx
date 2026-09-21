@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import TagInput from '../components/TagInput';
-import { Loader2, FileText, X, ArrowLeft, Sparkles } from 'lucide-react';
+import { Loader2, FileText, X, ArrowLeft, Sparkles, Wand2 } from 'lucide-react';
 
 export default function CreateProject() {
   const navigate = useNavigate();
@@ -35,6 +35,7 @@ export default function CreateProject() {
 
   const [prdContent, setPrdContent] = useState('');
   const [prdFileName, setPrdFileName] = useState('');
+  const [generatingPrd, setGeneratingPrd] = useState(false);
 
   const generateSlug = (name: string) => {
     return name
@@ -57,6 +58,63 @@ export default function CreateProject() {
       setError('');
     } catch {
       setError('Failed to read file');
+    }
+  };
+
+  const handleGeneratePrd = async () => {
+    if (!form.name.trim() && !form.summary.trim()) {
+      setError('Please enter at least a Project Name or Summary before generating a PRD');
+      return;
+    }
+    setGeneratingPrd(true);
+    setError('');
+    try {
+      const result = await api.generatePrd({
+        name: form.name,
+        description: form.description,
+        summary: form.summary,
+        product_type: form.product_type,
+        target_users: form.target_users,
+        business_goals: form.business_goals,
+        preferred_stack: form.preferred_stack,
+        deployment_target: form.deployment_target,
+        known_modules: form.known_modules,
+        known_integrations: form.known_integrations,
+        constraints: form.constraints,
+        additional_notes: form.additional_notes,
+      });
+
+      const suggestions = result.suggestions || {};
+
+      setForm((prev) => ({
+        ...prev,
+        name: suggestions.name || prev.name,
+        slug: suggestions.slug || prev.slug || generateSlug(suggestions.name || prev.name),
+        description: suggestions.description || prev.description,
+        git_remote: suggestions.git_remote || prev.git_remote,
+        repository_url: suggestions.repository_url || prev.repository_url,
+        summary: suggestions.summary || prev.summary,
+        product_type: suggestions.product_type?.length ? suggestions.product_type : prev.product_type,
+        target_users: suggestions.target_users?.length ? suggestions.target_users : prev.target_users,
+        business_goals: suggestions.business_goals?.length ? suggestions.business_goals : prev.business_goals,
+        preferred_stack: suggestions.preferred_stack?.length ? suggestions.preferred_stack : prev.preferred_stack,
+        deployment_target: suggestions.deployment_target?.length ? suggestions.deployment_target : prev.deployment_target,
+        known_modules: suggestions.known_modules?.length ? suggestions.known_modules : prev.known_modules,
+        known_integrations: suggestions.known_integrations?.length ? suggestions.known_integrations : prev.known_integrations,
+        constraints: suggestions.constraints?.length ? suggestions.constraints : prev.constraints,
+        additional_notes: suggestions.additional_notes || prev.additional_notes,
+      }));
+
+      if (result.prd_content) {
+        setPrdContent(result.prd_content);
+        setPrdFileName('generated-prd.md');
+      }
+
+      showToast('PRD generated and fields autofilled', 'success');
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate PRD');
+    } finally {
+      setGeneratingPrd(false);
     }
   };
 
@@ -196,9 +254,20 @@ export default function CreateProject() {
 
         {/* PRD Generation */}
         <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-4 h-4 text-primary-400" />
-            <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">PRD Generation</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary-400" />
+              <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">PRD Generation</h2>
+            </div>
+            <button
+              onClick={handleGeneratePrd}
+              disabled={generatingPrd}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              {generatingPrd && <Loader2 className="w-4 h-4 animate-spin" />}
+              {!generatingPrd && <Wand2 className="w-4 h-4" />}
+              {generatingPrd ? 'Generating…' : 'Generate PRD'}
+            </button>
           </div>
 
           <div className="space-y-4">

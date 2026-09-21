@@ -1,7 +1,0 @@
-# OpenCode secrets (keep .gitkeep)
-.project/secrets/*
-!.project/secrets/.gitkeep
-
-# Temporary plans (keep .gitkeep)
-.project/status/temp/*
-!.project/status/temp/.gitkeep

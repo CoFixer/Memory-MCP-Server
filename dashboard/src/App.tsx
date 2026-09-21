@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Memories from './pages/Memories';
 import Users from './pages/Users';
 import Projects from './pages/Projects';
+import CreateProject from './pages/CreateProject';
 import ProjectDetail from './pages/ProjectDetail';
 import ApiKeys from './pages/ApiKeys';
 import Settings from './pages/Settings';
@@ -114,6 +115,7 @@ function AppRoutes() {
         } />
         <Route path="users" element={<Users />} />
         <Route path="projects" element={<Projects />} />
+        <Route path="projects/new" element={<CreateProject />} />
         <Route path="projects/:id" element={<ProjectDetail />} />
         <Route path="api-keys" element={<ApiKeys />} />
         <Route path="settings" element={

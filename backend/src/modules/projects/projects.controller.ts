@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/co
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProjectsService } from './projects.service';
 import { MemoriesService } from '../memories/memories.service';
+import { PrdGenerationService, GeneratePrdDto } from '../prd/prd-generation.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { CombinedAuthGuard } from '../auth/combined-auth.guard';
@@ -17,6 +18,7 @@ export class ProjectsController {
   constructor(
     private readonly projectsService: ProjectsService,
     private readonly memoriesService: MemoriesService,
+    private readonly prdGenerationService: PrdGenerationService,
   ) {}
 
   @Get()
@@ -77,5 +79,12 @@ export class ProjectsController {
     @Body() dto: UpdateProjectDto,
   ) {
     return this.projectsService.update(user.id, id, dto);
+  }
+
+  @Post('generate-prd')
+  @ApiOperation({ summary: 'Generate PRD and field suggestions from project details' })
+  @ApiResponse({ status: 200, description: 'Generated PRD content and suggestions' })
+  async generatePrd(@Body() dto: GeneratePrdDto) {
+    return this.prdGenerationService.generate(dto);
   }
 }

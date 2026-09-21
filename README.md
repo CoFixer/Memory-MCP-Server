@@ -240,6 +240,8 @@ docker run -d \
   -e EMBEDDING_MODEL=nomic-embed-text \
   -e EMBEDDING_BASE_URL=http://host.docker.internal:11434 \
   -e EMBEDDING_DIMENSIONS=768 \
+  -e LLM_API_KEY=your-llm-api-key \
+  -e LLM_MODEL=gpt-4o-mini \
   -e MEMORY_DEFAULT_LIMIT=20 \
   -e MEMORY_CONTEXT_MAX_TOKENS=5000 \
   -e CACHE_TTL=300 \
@@ -323,6 +325,9 @@ services:
       EMBEDDING_MODEL: ${EMBEDDING_MODEL}
       EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL}
       EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS}
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_MODEL: ${LLM_MODEL}
+      LLM_BASE_URL: ${LLM_BASE_URL}
       MEMORY_DEFAULT_LIMIT: 20
       MEMORY_CONTEXT_MAX_TOKENS: 5000
       CACHE_TTL: 300
@@ -531,6 +536,9 @@ Full API documentation available at `/api/docs` (Swagger UI) when running.
 | `EMBEDDING_MODEL` | `nomic-embed-text` | Model name for embeddings |
 | `EMBEDDING_BASE_URL` | - | Provider base URL |
 | `EMBEDDING_DIMENSIONS` | `768` | Vector dimensions |
+| `LLM_API_KEY` | - | API key for PRD generation (OpenAI / OpenRouter) |
+| `LLM_MODEL` | `gpt-4o-mini` | Chat model for PRD generation |
+| `LLM_BASE_URL` | - | Optional custom base URL for LLM API |
 | `MEMORY_DEFAULT_LIMIT` | `20` | Default search result limit |
 | `MEMORY_CONTEXT_MAX_TOKENS` | `5000` | Default token budget for context |
 | `CACHE_TTL` | `300` | Redis cache TTL in seconds |

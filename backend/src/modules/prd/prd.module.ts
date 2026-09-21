@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PrdService } from './prd.service';
+import { PrdGenerationService } from './prd-generation.service';
 import { PrdController } from './prd.controller';
 import { PrdDocument } from '../../database/entities/prd-document.entity';
 import { PrdChunk } from '../../database/entities/prd-chunk.entity';
@@ -11,7 +12,7 @@ import { AuthModule } from '../auth/auth.module';
 @Module({
   imports: [TypeOrmModule.forFeature([PrdDocument, PrdChunk, PrdRelation, Project]), AuthModule],
   controllers: [PrdController],
-  providers: [PrdService],
-  exports: [PrdService],
+  providers: [PrdService, PrdGenerationService],
+  exports: [PrdService, PrdGenerationService],
 })
 export class PrdModule {}

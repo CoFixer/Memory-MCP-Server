@@ -3,21 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import TagInput from '../components/TagInput';
 import CheckboxGroup from '../components/CheckboxGroup';
 import Modal from '../components/Modal';
 import { Loader2, FileText, X, ArrowLeft, Sparkles, Wand2, Plus, Pencil } from 'lucide-react';
 
-const TECH_STACK_OPTIONS = [
-  'React', 'Vue', 'Angular', 'Svelte', 'Next.js', 'Nuxt',
-  'Node.js', 'NestJS', 'Express',
-  'Python', 'Django', 'FastAPI',
-  'Go', 'Rust', 'Java', 'Spring', '.NET',
-  'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Prisma',
-  'Docker', 'Kubernetes', 'AWS', 'Vercel', 'Netlify',
-  'React Native', 'Flutter',
-  'OpenAI', 'LangChain', 'TensorFlow',
-];
+const TECH_STACK_SECTIONS: Record<string, string[]> = {
+  Frontend: ['React', 'Vue', 'Angular', 'Svelte', 'Next.js', 'Nuxt'],
+  Backend: ['Node.js', 'NestJS', 'Express', 'Python', 'Django', 'FastAPI', 'Go', 'Rust', 'Java', 'Spring', '.NET'],
+  Database: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Prisma', 'SQLite', 'Elasticsearch'],
+  'Cache & Queue': ['Redis', 'RabbitMQ', 'Kafka', 'BullMQ', 'Celery'],
+  DevOps: ['Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'Vercel', 'Netlify', 'GitHub Actions', 'Terraform'],
+  Mobile: ['React Native', 'Flutter', 'Swift', 'Kotlin'],
+  'AI / ML': ['OpenAI', 'LangChain', 'TensorFlow', 'PyTorch', 'Hugging Face', 'Pinecone'],
+};
+
+const TECH_STACK_OPTIONS = Object.values(TECH_STACK_SECTIONS).flat();
 
 const PROJECT_TYPE_OPTIONS = [
   'Web Application',
@@ -40,6 +40,51 @@ const DEPLOYMENT_OPTIONS = [
   'Netlify',
   'Self-hosted',
   'Serverless',
+];
+
+const TARGET_USERS_OPTIONS = [
+  'Developers',
+  'Designers',
+  'Product Managers',
+  'Small Business',
+  'Enterprise',
+  'End Consumers',
+  'Internal Team',
+  'Startups',
+  'Content Creators',
+  'Healthcare Professionals',
+  'Educators',
+  'Government',
+];
+
+const BUSINESS_GOALS_OPTIONS = [
+  'Automate Processes',
+  'Reduce Costs',
+  'Increase Revenue',
+  'Improve User Experience',
+  'Scale Infrastructure',
+  'Reduce Time-to-Market',
+  'Data-Driven Decisions',
+  'Better Collaboration',
+  'Compliance & Security',
+  'Customer Retention',
+  'Market Expansion',
+  'Operational Efficiency',
+];
+
+const CONSTRAINTS_OPTIONS = [
+  'GDPR Compliance',
+  'HIPAA Compliance',
+  'SOC 2 Compliance',
+  'Budget Limit',
+  'Tight Deadline',
+  'Offline Support',
+  'Multi-language',
+  'Accessibility (WCAG)',
+  'High Availability (99.9%)',
+  'Limited Team Size',
+  'Legacy System Integration',
+  'Cross-Platform Support',
 ];
 
 export default function CreateProject() {
@@ -231,8 +276,11 @@ export default function CreateProject() {
 
   const modalConfig = [
     { key: 'product_type', title: 'Project Type', options: PROJECT_TYPE_OPTIONS },
-    { key: 'preferred_stack', title: 'Tech Stack', options: TECH_STACK_OPTIONS },
+    { key: 'preferred_stack', title: 'Tech Stack', options: TECH_STACK_OPTIONS, sections: TECH_STACK_SECTIONS },
     { key: 'deployment_target', title: 'Deployment Target', options: DEPLOYMENT_OPTIONS },
+    { key: 'target_users', title: 'Target Users', options: TARGET_USERS_OPTIONS },
+    { key: 'business_goals', title: 'Business Goals', options: BUSINESS_GOALS_OPTIONS },
+    { key: 'constraints', title: 'Constraints', options: CONSTRAINTS_OPTIONS },
   ] as const;
 
   const activeModal = modalConfig.find((m) => m.key === modalOpen);
@@ -415,34 +463,9 @@ export default function CreateProject() {
             {renderChipRow('Project Type', 'product_type', PROJECT_TYPE_OPTIONS)}
             {renderChipRow('Tech Stack', 'preferred_stack', TECH_STACK_OPTIONS)}
             {renderChipRow('Deployment Target', 'deployment_target', DEPLOYMENT_OPTIONS)}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400">Target Users</label>
-                <TagInput
-                  tags={form.target_users}
-                  onChange={(tags) => updateField('target_users', tags)}
-                  placeholder="e.g. developers, small-business"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400">Business Goals</label>
-                <TagInput
-                  tags={form.business_goals}
-                  onChange={(tags) => updateField('business_goals', tags)}
-                  placeholder="e.g. automate-invoicing"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400">Constraints</label>
-              <TagInput
-                tags={form.constraints}
-                onChange={(tags) => updateField('constraints', tags)}
-                placeholder="e.g. gdpr, budget-limit"
-              />
-            </div>
+            {renderChipRow('Target Users', 'target_users', TARGET_USERS_OPTIONS)}
+            {renderChipRow('Business Goals', 'business_goals', BUSINESS_GOALS_OPTIONS)}
+            {renderChipRow('Constraints', 'constraints', CONSTRAINTS_OPTIONS)}
 
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-400">Additional Notes</label>
@@ -503,6 +526,7 @@ export default function CreateProject() {
             options={activeModal.options}
             selected={modalTemp}
             onChange={setModalTemp}
+            {...('sections' in activeModal && activeModal.sections ? { sections: activeModal.sections } : {})}
           />
         </Modal>
       )}

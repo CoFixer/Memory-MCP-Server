@@ -5,9 +5,10 @@ interface CheckboxGroupProps {
   selected: string[];
   onChange: (selected: string[]) => void;
   columns?: 2 | 3 | 4;
+  sections?: Record<string, string[]>;
 }
 
-export default function CheckboxGroup({ options, selected, onChange, columns = 3 }: CheckboxGroupProps) {
+export default function CheckboxGroup({ options, selected, onChange, columns = 3, sections }: CheckboxGroupProps) {
   const toggle = (value: string) => {
     if (selected.includes(value)) {
       onChange(selected.filter((v) => v !== value));
@@ -22,9 +23,9 @@ export default function CheckboxGroup({ options, selected, onChange, columns = 3
     4: 'grid-cols-2 md:grid-cols-4',
   };
 
-  return (
+  const renderOptions = (opts: string[]) => (
     <div className={`grid ${gridCols[columns]} gap-2`}>
-      {options.map((option) => {
+      {opts.map((option) => {
         const isSelected = selected.includes(option);
         return (
           <button
@@ -52,4 +53,19 @@ export default function CheckboxGroup({ options, selected, onChange, columns = 3
       })}
     </div>
   );
+
+  if (sections && Object.keys(sections).length > 0) {
+    return (
+      <div className="space-y-5">
+        {Object.entries(sections).map(([title, opts]) => (
+          <div key={title} className="space-y-2">
+            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{title}</h4>
+            {renderOptions(opts)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return renderOptions(options);
 }

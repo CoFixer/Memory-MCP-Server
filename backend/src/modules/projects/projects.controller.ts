@@ -45,6 +45,19 @@ export class ProjectsController {
       });
     }
 
+    // Store summary as a high-importance memory if provided
+    if (dto.summary?.trim()) {
+      await this.memoriesService.create(user.id, {
+        content: dto.summary.trim(),
+        title: `Project Summary: ${project.name}`,
+        type: MemoryType.FACT,
+        scope: MemoryScope.PROJECT,
+        project_id: project.id,
+        importance: 9,
+        source: 'project-summary',
+      });
+    }
+
     return project;
   }
 

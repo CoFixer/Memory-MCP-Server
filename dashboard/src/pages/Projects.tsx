@@ -26,7 +26,23 @@ export default function Projects() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', slug: '', description: '', git_remote: '', repository_url: '' });
+  const [form, setForm] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    git_remote: '',
+    repository_url: '',
+    summary: '',
+    product_type: '',
+    target_users: '',
+    business_goals: '',
+    preferred_stack: '',
+    deployment_target: '',
+    known_modules: '',
+    known_integrations: '',
+    constraints: '',
+    additional_notes: '',
+  });
   const [prdContent, setPrdContent] = useState('');
   const [prdFileName, setPrdFileName] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -71,12 +87,22 @@ export default function Projects() {
     setSubmitting(true);
     setError('');
     try {
-      const payload = {
+      const payload: any = {
         name: form.name.trim(),
         slug: form.slug.trim(),
         description: form.description.trim() || undefined,
         git_remote: form.git_remote.trim() || undefined,
         repository_url: form.repository_url.trim() || undefined,
+        summary: form.summary.trim() || undefined,
+        product_type: form.product_type.trim() || undefined,
+        target_users: form.target_users.trim() || undefined,
+        business_goals: form.business_goals.trim() || undefined,
+        preferred_stack: form.preferred_stack.trim() || undefined,
+        deployment_target: form.deployment_target.trim() || undefined,
+        known_modules: form.known_modules.trim() || undefined,
+        known_integrations: form.known_integrations.trim() || undefined,
+        constraints: form.constraints.trim() || undefined,
+        additional_notes: form.additional_notes.trim() || undefined,
         ...(prdContent.trim() ? { prd_content: prdContent.trim() } : {}),
       };
       const promise = isAdmin
@@ -85,7 +111,12 @@ export default function Projects() {
       await promise;
       showToast('Project created successfully', 'success');
       setShowForm(false);
-      setForm({ name: '', slug: '', description: '', git_remote: '', repository_url: '' });
+      setForm({
+        name: '', slug: '', description: '', git_remote: '', repository_url: '',
+        summary: '', product_type: '', target_users: '', business_goals: '',
+        preferred_stack: '', deployment_target: '', known_modules: '',
+        known_integrations: '', constraints: '', additional_notes: '',
+      });
       setPrdContent('');
       setPrdFileName('');
       load();
@@ -170,6 +201,82 @@ export default function Projects() {
           </div>
 
           <div className="mt-4">
+            <h4 className="text-sm font-semibold text-slate-300 mb-2">Project Summary (for PRD generation)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <textarea
+                placeholder="Project summary *"
+                value={form.summary}
+                onChange={(e) => setForm({ ...form, summary: e.target.value })}
+                rows={3}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 md:col-span-2"
+              />
+              <input
+                type="text"
+                placeholder="Product type (e.g. web-app, api-service)"
+                value={form.product_type}
+                onChange={(e) => setForm({ ...form, product_type: e.target.value })}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="text"
+                placeholder="Target users"
+                value={form.target_users}
+                onChange={(e) => setForm({ ...form, target_users: e.target.value })}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="text"
+                placeholder="Business goals"
+                value={form.business_goals}
+                onChange={(e) => setForm({ ...form, business_goals: e.target.value })}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="text"
+                placeholder="Preferred stack (e.g. NestJS, PostgreSQL, React)"
+                value={form.preferred_stack}
+                onChange={(e) => setForm({ ...form, preferred_stack: e.target.value })}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="text"
+                placeholder="Deployment target (e.g. Docker, Dokploy, AWS)"
+                value={form.deployment_target}
+                onChange={(e) => setForm({ ...form, deployment_target: e.target.value })}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="text"
+                placeholder="Known modules"
+                value={form.known_modules}
+                onChange={(e) => setForm({ ...form, known_modules: e.target.value })}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="text"
+                placeholder="Known integrations"
+                value={form.known_integrations}
+                onChange={(e) => setForm({ ...form, known_integrations: e.target.value })}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="text"
+                placeholder="Constraints"
+                value={form.constraints}
+                onChange={(e) => setForm({ ...form, constraints: e.target.value })}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="text"
+                placeholder="Additional notes"
+                value={form.additional_notes}
+                onChange={(e) => setForm({ ...form, additional_notes: e.target.value })}
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4">
             <label className="block text-sm font-medium text-slate-300 mb-2">
               PRD Document (Markdown)
             </label>
@@ -218,7 +325,7 @@ export default function Projects() {
               Create
             </button>
             <button
-              onClick={() => { setShowForm(false); setError(''); }}
+              onClick={() => { setShowForm(false); setError(''); setForm({ name: '', slug: '', description: '', git_remote: '', repository_url: '', summary: '', product_type: '', target_users: '', business_goals: '', preferred_stack: '', deployment_target: '', known_modules: '', known_integrations: '', constraints: '', additional_notes: '' }); setPrdContent(''); setPrdFileName(''); }}
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm"
             >
               Cancel

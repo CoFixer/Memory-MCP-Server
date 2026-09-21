@@ -21,6 +21,8 @@ import { HealthModule } from './modules/health/health.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AdminModule } from './modules/admin/admin.module';
 
+import { PrdModule } from './modules/prd/prd.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -48,6 +50,7 @@ import { AdminModule } from './modules/admin/admin.module';
     HealthModule,
     AuditModule,
     AdminModule,
+    PrdModule,
   ],
   controllers: [AppController],
   providers: [AppService],

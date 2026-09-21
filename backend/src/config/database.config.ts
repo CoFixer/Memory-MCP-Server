@@ -10,6 +10,9 @@ import { AuditLog } from '../database/entities/audit-log.entity';
 import { MemoryVersion } from '../database/entities/memory-version.entity';
 import { EmbeddingProviderConfig } from '../database/entities/embedding-provider-config.entity';
 import { ProjectAssignment } from '../database/entities/project-assignment.entity';
+import { PrdDocument } from '../database/entities/prd-document.entity';
+import { PrdChunk } from '../database/entities/prd-chunk.entity';
+import { PrdRelation } from '../database/entities/prd-relation.entity';
 
 @Injectable()
 export class DatabaseConfig implements TypeOrmOptionsFactory {
@@ -29,6 +32,9 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
         MemoryVersion,
         EmbeddingProviderConfig,
         ProjectAssignment,
+        PrdDocument,
+        PrdChunk,
+        PrdRelation,
       ],
       synchronize: this.configService.get<string>('NODE_ENV') !== 'production',
       logging: this.configService.get<string>('NODE_ENV') === 'development',

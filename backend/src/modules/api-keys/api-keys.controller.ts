@@ -2,13 +2,13 @@ import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/c
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ApiKeysService } from './api-keys.service';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
-import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
+import { CombinedAuthGuard } from '../auth/combined-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '../../database/entities/user.entity';
 
 @ApiTags('API Keys')
 @ApiBearerAuth()
-@UseGuards(ApiKeyAuthGuard)
+@UseGuards(CombinedAuthGuard)
 @Controller('api-keys')
 export class ApiKeysController {
   constructor(private readonly apiKeysService: ApiKeysService) {}

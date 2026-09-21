@@ -11,6 +11,9 @@ import {
 import { User } from './user.entity';
 import { Workspace } from './workspace.entity';
 import { Memory } from './memory.entity';
+import { ProjectAssignment } from './project-assignment.entity';
+import { PrdDocument } from './prd-document.entity';
+import { PrdChunk } from './prd-chunk.entity';
 
 @Entity('projects')
 export class Project {
@@ -46,6 +49,12 @@ export class Project {
   @Column('text', { nullable: true })
   description: string | null;
 
+  @Column('text', { nullable: true })
+  summary: string | null;
+
+  @Column('uuid', { nullable: true })
+  active_prd_id: string | null;
+
   @Column('jsonb', { default: {} })
   metadata: Record<string, any>;
 
@@ -57,4 +66,13 @@ export class Project {
 
   @OneToMany(() => Memory, (memory) => memory.project)
   memories: Memory[];
+
+  @OneToMany(() => PrdDocument, (doc) => doc.project)
+  prdDocuments: PrdDocument[];
+
+  @OneToMany(() => PrdChunk, (chunk) => chunk.project)
+  prdChunks: PrdChunk[];
+
+  @OneToMany(() => ProjectAssignment, (assignment) => assignment.project)
+  assignments: ProjectAssignment[];
 }

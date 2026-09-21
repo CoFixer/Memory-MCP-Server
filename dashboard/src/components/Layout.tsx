@@ -6,21 +6,26 @@ import {
   Users,
   FolderKanban,
   KeyRound,
+  Settings,
   LogOut,
   ChevronRight,
 } from 'lucide-react';
 
 const nav = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/memories', label: 'Memories', icon: Brain },
+  { path: '/', label: 'Dashboard', icon: LayoutDashboard, adminOnly: true },
+  { path: '/memories', label: 'Memories', icon: Brain, adminOnly: true },
   { path: '/users', label: 'Users', icon: Users },
   { path: '/projects', label: 'Projects', icon: FolderKanban },
   { path: '/api-keys', label: 'API Keys', icon: KeyRound },
+  { path: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ];
 
 export default function Layout() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const isAdmin = user?.role === 'admin';
+
+  const visibleNav = nav.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100">
@@ -33,7 +38,7 @@ export default function Layout() {
         </div>
 
         <nav className="flex-1 px-3 space-y-1">
-          {nav.map((item) => {
+          {visibleNav.map((item) => {
             const active = location.pathname === item.path;
             const Icon = item.icon;
             return (

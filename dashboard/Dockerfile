@@ -1,26 +1,55 @@
-# Build stage
-FROM node:24-alpine AS builder
+# ============================================
+# Build stage: Bun latest + Node.js latest stable (24.x LTS)
+# ============================================
+FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install Node.js 24.x LTS (latest stable) via NodeSource
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy lockfile and package manifest
-COPY package.json pnpm-lock.yaml ./
+# Verify installed versions
+RUN echo "Bun version: $(bun --version)" && echo "Node version: $(node --version)"
 
-# Install all dependencies
-RUN pnpm install --frozen-lockfile
+# Copy package manifest
+COPY package.json ./
 
+# Install dependencies with Bun (ignores old lockfiles if present)
+RUN bun install
+
+# Copy source code and build
 COPY . .
-RUN pnpm run build
 
-# Production stage
+# Accept build-time API URL (e.g. https://api.yourdomain.com/api/v1)
+ARG VITE_API_BASE_URL=/api/v1
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+ARG VITE_BASENAME=/
+ENV VITE_BASENAME=${VITE_BASENAME}
+
+RUN bun run build
+
+# ============================================
+# Production stage: lightweight nginx
+# ============================================
 FROM nginx:alpine
 
+# Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+# Copy .env file if it exists (for runtime config)
+RUN if [ -f .env ]; then cp .env /usr/share/nginx/html/; elif [ -f .env.example ]; then cp .env.example /usr/share/nginx/html/.env; fi
 
-CMD ["nginx", "-g", "daemon off;"]
+# Copy custom entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose HTTP port
+EXPOSE 8080
+
+# Use custom entrypoint
+ENTRYPOINT ["/entrypoint.sh"]

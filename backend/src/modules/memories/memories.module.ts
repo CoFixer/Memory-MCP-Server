@@ -9,6 +9,7 @@ import { EmbeddingsModule } from '../embeddings/embeddings.module';
 import { SearchModule } from '../search/search.module';
 import { CacheModule } from '../cache/cache.module';
 import { AuditModule } from '../audit/audit.module';
+import { ApiKeysModule } from '../api-keys/api-keys.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AuditModule } from '../audit/audit.module';
     SearchModule,
     CacheModule,
     AuditModule,
+    ApiKeysModule,
   ],
   controllers: [MemoriesController],
   providers: [MemoriesService],

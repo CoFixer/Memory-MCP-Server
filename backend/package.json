@@ -72,6 +72,14 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt",
+      "@parcel/watcher",
+      "@scarf/scarf",
+      "unrs-resolver"
+    ]
+  },
   "jest": {
     "moduleFileExtensions": [
       "js",

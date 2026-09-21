@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -6,13 +6,16 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
+import { CombinedAuthGuard } from './combined-auth.guard';
 import { ApiKey } from '../../database/entities/api-key.entity';
 import { User } from '../../database/entities/user.entity';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
+    forwardRef(() => UsersModule),
     TypeOrmModule.forFeature([ApiKey, User]),
-    PassportModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -22,8 +25,8 @@ import { User } from '../../database/entities/user.entity';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, CombinedAuthGuard],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, PassportModule, JwtModule, CombinedAuthGuard, UsersModule],
 })
 export class AuthModule {}

@@ -1,17 +1,19 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import TagInput from '../components/TagInput';
-import { Loader2, ArrowLeft, FileText, X, Sparkles, Plus } from 'lucide-react';
+import { Loader2, FileText, X, ArrowLeft, Sparkles } from 'lucide-react';
 
 export default function CreateProject() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { showToast } = useToast();
+  const isAdmin = user?.role === 'admin';
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [loading, setLoading] = useState(false);
-  const [prdFile, setPrdFile] = useState<File | null>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -19,10 +21,6 @@ export default function CreateProject() {
     description: '',
     git_remote: '',
     repository_url: '',
-    workspace_id: '',
-  });
-
-  const [prd, setPrd] = useState({
     summary: '',
     product_type: [] as string[],
     target_users: [] as string[],
@@ -35,9 +33,8 @@ export default function CreateProject() {
     additional_notes: '',
   });
 
-  const updateForm = (key: string, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
+  const [prdContent, setPrdContent] = useState('');
+  const [prdFileName, setPrdFileName] = useState('');
 
   const generateSlug = (name: string) => {
     return name
@@ -46,13 +43,30 @@ export default function CreateProject() {
       .replace(/^-|-$/g, '');
   };
 
-  const handleSubmit = async () => {
-    if (!form.name.trim() || !form.slug.trim()) {
-      showToast('Name and slug are required', 'error');
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'text/markdown' && !file.name.endsWith('.md')) {
+      setError('Please upload a markdown (.md) file');
       return;
     }
+    try {
+      const text = await file.text();
+      setPrdContent(text);
+      setPrdFileName(file.name);
+      setError('');
+    } catch {
+      setError('Failed to read file');
+    }
+  };
 
-    setLoading(true);
+  const handleCreate = async () => {
+    if (!form.name.trim() || !form.slug.trim()) {
+      setError('Name and slug are required');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
     try {
       const payload: any = {
         name: form.name.trim(),
@@ -60,73 +74,71 @@ export default function CreateProject() {
         description: form.description.trim() || undefined,
         git_remote: form.git_remote.trim() || undefined,
         repository_url: form.repository_url.trim() || undefined,
-        workspace_id: form.workspace_id.trim() || undefined,
-        metadata: {
-          prd: {
-            summary: prd.summary.trim() || undefined,
-            product_type: prd.product_type.length ? prd.product_type : undefined,
-            target_users: prd.target_users.length ? prd.target_users : undefined,
-            business_goals: prd.business_goals.length ? prd.business_goals : undefined,
-            preferred_stack: prd.preferred_stack.length ? prd.preferred_stack : undefined,
-            deployment_target: prd.deployment_target.length ? prd.deployment_target : undefined,
-            known_modules: prd.known_modules.length ? prd.known_modules : undefined,
-            known_integrations: prd.known_integrations.length ? prd.known_integrations : undefined,
-            constraints: prd.constraints.length ? prd.constraints : undefined,
-            additional_notes: prd.additional_notes.trim() || undefined,
-          },
-        },
+        summary: form.summary.trim() || undefined,
+        product_type: form.product_type.join(', ') || undefined,
+        target_users: form.target_users.join(', ') || undefined,
+        business_goals: form.business_goals.join(', ') || undefined,
+        preferred_stack: form.preferred_stack.join(', ') || undefined,
+        deployment_target: form.deployment_target.join(', ') || undefined,
+        known_modules: form.known_modules.join(', ') || undefined,
+        known_integrations: form.known_integrations.join(', ') || undefined,
+        constraints: form.constraints.join(', ') || undefined,
+        additional_notes: form.additional_notes.trim() || undefined,
+        ...(prdContent.trim() ? { prd_content: prdContent.trim() } : {}),
       };
-
-      // Remove empty metadata.prd fields
-      const prdEntries = Object.entries(payload.metadata.prd).filter(([, v]) => v !== undefined);
-      if (prdEntries.length === 0) {
-        delete payload.metadata;
-      } else {
-        payload.metadata.prd = Object.fromEntries(prdEntries);
-      }
-
-      await api.createProject(payload);
+      const promise = isAdmin
+        ? api.createProject({ ...payload, user_id: user!.id })
+        : api.createMyProject(payload);
+      await promise;
       showToast('Project created successfully', 'success');
       navigate('/projects');
     } catch (err: any) {
-      showToast(err.message || 'Failed to create project', 'error');
+      setError(err.message || 'Failed to create project');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
+  };
+
+  const updateField = (key: keyof typeof form, value: any) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => navigate('/projects')}
-          className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+      <button
+        onClick={() => navigate('/projects')}
+        className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-6 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Projects
+      </button>
+
+      <div className="flex items-center gap-3 mb-2">
+        <div className="p-2 bg-primary-500/10 rounded-lg">
+          <Sparkles className="w-6 h-6 text-primary-400" />
+        </div>
         <div>
-          <h1 className="text-3xl font-bold text-white">Create Project</h1>
-          <p className="text-slate-400">Set up a new project and optionally generate a PRD</p>
+          <h1 className="text-2xl font-bold text-white">Create Project</h1>
+          <p className="text-slate-400 text-sm">Set up a new project and optionally generate a PRD</p>
         </div>
       </div>
 
-      <div className="space-y-6">
-        {/* Basic Info Section */}
+      {error && (
+        <div className="mt-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-6 space-y-6">
+        {/* Basic Info */}
         <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
-              <Plus className="w-4 h-4 text-primary-400" />
-            </div>
-            Basic Information
-          </h2>
+          <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-4">Basic Info</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">
-                Project Name <span className="text-red-400">*</span>
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-400">Project Name *</label>
               <input
                 type="text"
+                placeholder="e.g. My Awesome App"
                 value={form.name}
                 onChange={(e) => {
                   const name = e.target.value;
@@ -136,199 +148,204 @@ export default function CreateProject() {
                     slug: prev.slug || generateSlug(name),
                   }));
                 }}
-                placeholder="My Awesome Project"
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">
-                Slug <span className="text-red-400">*</span>
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-400">Slug *</label>
               <input
                 type="text"
+                placeholder="my-awesome-app"
                 value={form.slug}
-                onChange={(e) => updateForm('slug', e.target.value)}
-                placeholder="my-awesome-project"
+                onChange={(e) => updateField('slug', e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <label className="block text-sm font-medium text-slate-300">Description</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => updateForm('description', e.target.value)}
-                placeholder="Brief description of the project..."
-                rows={3}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">Git Remote URL</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-400">Git Remote URL</label>
               <input
                 type="text"
-                value={form.git_remote}
-                onChange={(e) => updateForm('git_remote', e.target.value)}
                 placeholder="https://github.com/user/repo.git"
+                value={form.git_remote}
+                onChange={(e) => updateField('git_remote', e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">Repository URL</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-400">Repository URL</label>
               <input
                 type="text"
-                value={form.repository_url}
-                onChange={(e) => updateForm('repository_url', e.target.value)}
                 placeholder="https://github.com/user/repo"
+                value={form.repository_url}
+                onChange={(e) => updateField('repository_url', e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-xs font-medium text-slate-400">Description</label>
+              <input
+                type="text"
+                placeholder="Short description of the project"
+                value={form.description}
+                onChange={(e) => updateField('description', e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
         </section>
 
-        {/* PRD Generation Section */}
+        {/* PRD Generation */}
         <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-yellow-400" />
-            </div>
-            PRD Generation
-          </h2>
-          <p className="text-sm text-slate-400 mb-4">
-            Fill in the details below to help generate a comprehensive PRD for your project.
-          </p>
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-4 h-4 text-primary-400" />
+            <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">PRD Generation</h2>
+          </div>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">Project Summary</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-400">Project Summary *</label>
               <textarea
-                value={prd.summary}
-                onChange={(e) => setPrd((prev) => ({ ...prev, summary: e.target.value }))}
-                placeholder="Describe what your project does, its main features, and goals..."
+                placeholder="Describe what the project does, its purpose, and key features..."
+                value={form.summary}
+                onChange={(e) => updateField('summary', e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TagInput
-                tags={prd.product_type}
-                onChange={(tags) => setPrd((prev) => ({ ...prev, product_type: tags }))}
-                placeholder="e.g. web-app, api-service, mobile-app"
-                label="Product Type"
-              />
-              <TagInput
-                tags={prd.target_users}
-                onChange={(tags) => setPrd((prev) => ({ ...prev, target_users: tags }))}
-                placeholder="e.g. developers, enterprise, consumers"
-                label="Target Users"
-              />
-              <TagInput
-                tags={prd.business_goals}
-                onChange={(tags) => setPrd((prev) => ({ ...prev, business_goals: tags }))}
-                placeholder="e.g. automation, revenue-growth, efficiency"
-                label="Business Goals"
-              />
-              <TagInput
-                tags={prd.preferred_stack}
-                onChange={(tags) => setPrd((prev) => ({ ...prev, preferred_stack: tags }))}
-                placeholder="e.g. NestJS, React, PostgreSQL, Docker"
-                label="Preferred Stack"
-              />
-              <TagInput
-                tags={prd.deployment_target}
-                onChange={(tags) => setPrd((prev) => ({ ...prev, deployment_target: tags }))}
-                placeholder="e.g. AWS, Vercel, Docker, Kubernetes"
-                label="Deployment Target"
-              />
-              <TagInput
-                tags={prd.known_modules}
-                onChange={(tags) => setPrd((prev) => ({ ...prev, known_modules: tags }))}
-                placeholder="e.g. auth, billing, notifications"
-                label="Known Modules"
-              />
-              <TagInput
-                tags={prd.known_integrations}
-                onChange={(tags) => setPrd((prev) => ({ ...prev, known_integrations: tags }))}
-                placeholder="e.g. Stripe, SendGrid, Slack"
-                label="Known Integrations"
-              />
-              <TagInput
-                tags={prd.constraints}
-                onChange={(tags) => setPrd((prev) => ({ ...prev, constraints: tags }))}
-                placeholder="e.g. gdpr, budget-limit, timeline"
-                label="Constraints"
-              />
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400">Product Type</label>
+                <TagInput
+                  tags={form.product_type}
+                  onChange={(tags) => updateField('product_type', tags)}
+                  placeholder="e.g. web-app, api-service, mobile-app"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400">Target Users</label>
+                <TagInput
+                  tags={form.target_users}
+                  onChange={(tags) => updateField('target_users', tags)}
+                  placeholder="e.g. developers, small-business, enterprise"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400">Business Goals</label>
+                <TagInput
+                  tags={form.business_goals}
+                  onChange={(tags) => updateField('business_goals', tags)}
+                  placeholder="e.g. automate-invoicing, reduce-support-tickets"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400">Preferred Stack</label>
+                <TagInput
+                  tags={form.preferred_stack}
+                  onChange={(tags) => updateField('preferred_stack', tags)}
+                  placeholder="e.g. NestJS, PostgreSQL, React, Docker"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400">Deployment Target</label>
+                <TagInput
+                  tags={form.deployment_target}
+                  onChange={(tags) => updateField('deployment_target', tags)}
+                  placeholder="e.g. Docker, Dokploy, AWS, Vercel"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400">Known Modules</label>
+                <TagInput
+                  tags={form.known_modules}
+                  onChange={(tags) => updateField('known_modules', tags)}
+                  placeholder="e.g. auth, billing, notifications"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400">Known Integrations</label>
+                <TagInput
+                  tags={form.known_integrations}
+                  onChange={(tags) => updateField('known_integrations', tags)}
+                  placeholder="e.g. Stripe, SendGrid, Slack"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400">Constraints</label>
+                <TagInput
+                  tags={form.constraints}
+                  onChange={(tags) => updateField('constraints', tags)}
+                  placeholder="e.g. gdpr, hipaa, budget-limit"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">Additional Notes</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-400">Additional Notes</label>
               <textarea
-                value={prd.additional_notes}
-                onChange={(e) => setPrd((prev) => ({ ...prev, additional_notes: e.target.value }))}
-                placeholder="Any other important details..."
+                placeholder="Any other details that might help with PRD generation..."
+                value={form.additional_notes}
+                onChange={(e) => updateField('additional_notes', e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
         </section>
 
-        {/* PRD File Upload */}
+        {/* PRD Upload */}
         <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
-              <FileText className="w-4 h-4 text-blue-400" />
-            </div>
-            PRD Document Upload
-          </h2>
-          <p className="text-sm text-slate-400 mb-4">
-            Already have a PRD? Upload it here instead of generating one.
-          </p>
-
+          <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-4">PRD Document</h2>
           <div className="flex items-center gap-3">
             <input
               ref={fileInputRef}
               type="file"
               accept=".md,.markdown,text/markdown"
-              onChange={(e) => setPrdFile(e.target.files?.[0] || null)}
+              onChange={handleFileChange}
               className="hidden"
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm rounded-lg transition-colors"
             >
               <FileText className="w-4 h-4" />
-              {prdFile ? prdFile.name : 'Upload PRD (.md)'}
+              {prdFileName || 'Upload PRD (.md)'}
             </button>
-            {prdFile && (
+            {prdFileName && (
               <button
-                onClick={() => {
-                  setPrdFile(null);
-                  if (fileInputRef.current) fileInputRef.current.value = '';
-                }}
-                className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+                onClick={() => { setPrdContent(''); setPrdFileName(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
+          {prdContent && (
+            <div className="mt-3 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
+              <p className="text-xs text-slate-400 mb-1">Preview (first 200 chars):</p>
+              <p className="text-sm text-slate-300 font-mono truncate">{prdContent.slice(0, 200)}...</p>
+            </div>
+          )}
+          <p className="text-xs text-slate-500 mt-2">
+            Upload an existing PRD markdown file. It will be stored as a project-scoped memory so OpenCode can follow it with AREG.
+          </p>
         </section>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4">
+        <div className="flex items-center gap-3 pt-2">
           <button
-            onClick={() => navigate('/projects')}
-            className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+            onClick={handleCreate}
+            disabled={submitting}
+            className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
           >
-            Cancel
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            Create Project
           </button>
           <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="flex items-center gap-2 px-6 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+            onClick={() => navigate('/projects')}
+            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition-colors"
           >
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Create Project
+            Cancel
           </button>
         </div>
       </div>

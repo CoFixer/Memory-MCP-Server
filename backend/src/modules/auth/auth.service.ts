@@ -38,8 +38,10 @@ export class AuthService {
     return null;
   }
 
-  async login(email: string, password: string) {
-    const user = await this.userRepository.findOne({ where: { email } });
+  async login(identifier: string, password: string) {
+    const user = await this.userRepository.findOne({
+      where: [{ email: identifier }, { username: identifier }],
+    });
     if (!user || !user.password_hash) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -56,23 +58,47 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        username: user.username,
         role: user.role,
       },
     };
   }
 
-  async register(email: string, password: string, name?: string, role?: UserRole) {
-    const existing = await this.userRepository.findOne({ where: { email } });
-    if (existing) {
+  async isSetupRequired(): Promise<boolean> {
+    const adminCount = await this.userRepository.count({ where: { role: UserRole.ADMIN } });
+    return adminCount === 0;
+  }
+
+  async resetSetup(): Promise<{ success: boolean; message: string }> {
+    await this.userRepository.clear();
+    return { success: true, message: 'All users cleared. Setup required.' };
+  }
+
+  async setupAdmin(email: string, password: string, name?: string, username?: string) {
+    const existingAdmin = await this.userRepository.count({ where: { role: UserRole.ADMIN } });
+    if (existingAdmin > 0) {
+      throw new ConflictException('Admin already exists. Setup is not allowed.');
+    }
+
+    const existingEmail = await this.userRepository.findOne({ where: { email } });
+    if (existingEmail) {
       throw new ConflictException('Email already registered');
+    }
+
+    if (username) {
+      const existingUsername = await this.userRepository.findOne({ where: { username } });
+      if (existingUsername) {
+        throw new ConflictException('Username already taken');
+      }
     }
 
     const password_hash = await bcrypt.hash(password, 12);
     const user = this.userRepository.create({
       email,
       name: name || null,
+      username: username || null,
       password_hash,
-      role: role || UserRole.USER,
+      role: UserRole.ADMIN,
     });
     const saved = await this.userRepository.save(user);
 
@@ -83,6 +109,7 @@ export class AuthService {
         id: saved.id,
         email: saved.email,
         name: saved.name,
+        username: saved.username,
         role: saved.role,
       },
     };

@@ -5,16 +5,16 @@ interface TagInputProps {
   tags: string[];
   onChange: (tags: string[]) => void;
   placeholder?: string;
-  label?: string;
+  className?: string;
 }
 
-export default function TagInput({ tags, onChange, placeholder, label }: TagInputProps) {
+export default function TagInput({ tags, onChange, placeholder, className = '' }: TagInputProps) {
   const [input, setInput] = useState('');
 
-  const addTag = (value: string) => {
-    const trimmed = value.trim();
-    if (trimmed && !tags.includes(trimmed)) {
-      onChange([...tags, trimmed]);
+  const addTag = (raw: string) => {
+    const tag = raw.trim();
+    if (tag && !tags.includes(tag)) {
+      onChange([...tags, tag]);
     }
     setInput('');
   };
@@ -27,43 +27,42 @@ export default function TagInput({ tags, onChange, placeholder, label }: TagInpu
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       addTag(input);
-    } else if (e.key === 'Backspace' && !input && tags.length > 0) {
+    }
+    if (e.key === 'Backspace' && !input && tags.length > 0) {
       onChange(tags.slice(0, -1));
     }
   };
 
   return (
-    <div className="space-y-2">
-      {label && (
-        <label className="block text-sm font-medium text-slate-300">{label}</label>
-      )}
-      <div className="flex flex-wrap gap-2 p-2 bg-slate-800 border border-slate-700 rounded-lg min-h-[42px] focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500">
-        {tags.map((tag, index) => (
-          <span
-            key={`${tag}-${index}`}
-            className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary-500/20 text-primary-300 rounded-md border border-primary-500/30"
+    <div
+      className={`flex flex-wrap items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus-within:ring-2 focus-within:ring-primary-500 ${className}`}
+    >
+      {tags.map((tag, i) => (
+        <span
+          key={`${tag}-${i}`}
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-primary-500/10 text-primary-400 border border-primary-500/20 rounded-md"
+        >
+          {tag}
+          <button
+            type="button"
+            onClick={() => removeTag(i)}
+            className="p-0.5 rounded hover:bg-primary-500/20 text-primary-400 hover:text-primary-300 transition-colors"
           >
-            {tag}
-            <button
-              type="button"
-              onClick={() => removeTag(index)}
-              className="p-0.5 hover:bg-primary-500/30 rounded transition-colors"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </span>
-        ))}
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={() => input.trim() && addTag(input)}
-          placeholder={tags.length === 0 ? placeholder : ''}
-          className="flex-1 min-w-[120px] bg-transparent text-white placeholder-slate-500 outline-none text-sm"
-        />
-      </div>
-      <p className="text-xs text-slate-500">Press Enter or comma to add</p>
+            <X className="w-3 h-3" />
+          </button>
+        </span>
+      ))}
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={() => {
+          if (input.trim()) addTag(input);
+        }}
+        placeholder={tags.length === 0 ? placeholder : ''}
+        className="flex-1 min-w-[120px] bg-transparent text-white placeholder-slate-500 focus:outline-none text-sm"
+      />
     </div>
   );
 }

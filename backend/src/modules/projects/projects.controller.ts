@@ -1,18 +1,23 @@
 import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProjectsService } from './projects.service';
+import { MemoriesService } from '../memories/memories.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
+import { CombinedAuthGuard } from '../auth/combined-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '../../database/entities/user.entity';
+import { MemoryScope, MemoryType } from '../../database/entities/memory.entity';
 
 @ApiTags('Projects')
 @ApiBearerAuth()
-@UseGuards(ApiKeyAuthGuard)
+@UseGuards(CombinedAuthGuard)
 @Controller('projects')
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly memoriesService: MemoriesService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List projects' })
@@ -25,7 +30,35 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Create project' })
   @ApiResponse({ status: 201, description: 'Project created' })
   async create(@CurrentUser() user: User, @Body() dto: CreateProjectDto) {
-    return this.projectsService.create(user.id, dto);
+    const { prd_content, ...projectDto } = dto;
+    const project = await this.projectsService.create(user.id, projectDto);
+
+    if (prd_content?.trim()) {
+      await this.memoriesService.create(user.id, {
+        content: prd_content.trim(),
+        title: `PRD: ${project.name}`,
+        type: MemoryType.RULE,
+        scope: MemoryScope.PROJECT,
+        project_id: project.id,
+        importance: 10,
+        source: 'prd-upload',
+      });
+    }
+
+    // Store summary as a high-importance memory if provided
+    if (dto.summary?.trim()) {
+      await this.memoriesService.create(user.id, {
+        content: dto.summary.trim(),
+        title: `Project Summary: ${project.name}`,
+        type: MemoryType.FACT,
+        scope: MemoryScope.PROJECT,
+        project_id: project.id,
+        importance: 9,
+        source: 'project-summary',
+      });
+    }
+
+    return project;
   }
 
   @Get(':id')

@@ -1,4 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
+import { UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { AuthService } from '../../../../src/modules/auth/auth.service';
 import { ApiKey } from '../../../../src/database/entities/api-key.entity';
 import { User } from '../../../../src/database/entities/user.entity';
@@ -12,6 +15,7 @@ const mockApiKeyRepository = () => ({
 
 const mockUserRepository = () => ({
   findOne: jest.fn(),
+  count: jest.fn(),
 });
 
 describe('AuthService', () => {
@@ -25,6 +29,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: getRepositoryToken(ApiKey), useFactory: mockApiKeyRepository },
         { provide: getRepositoryToken(User), useFactory: mockUserRepository },
+        { provide: JwtService, useValue: { sign: jest.fn(() => 'test-token') } },
       ],
     }).compile();
 
@@ -76,6 +81,70 @@ describe('AuthService', () => {
 
       const result = await service.validateApiKey('mem_live_123');
       expect(result).toBeNull();
+    });
+  });
+
+  describe('login', () => {
+    it('should login with email', async () => {
+      const password = 'password123';
+      const password_hash = await bcrypt.hash(password, 10);
+      const user = {
+        id: 'user-1',
+        email: 'test@example.com',
+        username: 'testuser',
+        name: 'Test User',
+        password_hash,
+        role: 'admin',
+      } as User;
+
+      userRepo.findOne.mockResolvedValue(user);
+
+      const result = await service.login('test@example.com', password);
+      expect(result.access_token).toBe('test-token');
+      expect(result.user.email).toBe('test@example.com');
+    });
+
+    it('should login with username', async () => {
+      const password = 'password123';
+      const password_hash = await bcrypt.hash(password, 10);
+      const user = {
+        id: 'user-1',
+        email: 'test@example.com',
+        username: 'testuser',
+        name: 'Test User',
+        password_hash,
+        role: 'admin',
+      } as User;
+
+      userRepo.findOne.mockResolvedValue(user);
+
+      const result = await service.login('testuser', password);
+      expect(result.access_token).toBe('test-token');
+      expect(result.user.username).toBe('testuser');
+    });
+
+    it('should throw UnauthorizedException for invalid identifier', async () => {
+      userRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.login('nonexistent', 'password')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException for wrong password', async () => {
+      const user = {
+        id: 'user-1',
+        email: 'test@example.com',
+        username: 'testuser',
+        password_hash: await bcrypt.hash('correctpassword', 10),
+        role: 'admin',
+      } as User;
+
+      userRepo.findOne.mockResolvedValue(user);
+
+      await expect(service.login('test@example.com', 'wrongpassword')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

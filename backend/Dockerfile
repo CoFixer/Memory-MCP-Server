@@ -1,38 +1,27 @@
 # Build stage
-FROM node:24-alpine AS builder
+FROM oven/bun:alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm globally
-RUN npm install -g pnpm
-
-# Copy lockfile and package manifest
-COPY package.json pnpm-lock.yaml ./
+# Copy package manifest
+COPY package.json ./
 
 # Install all dependencies
-RUN pnpm install --frozen-lockfile
-
-# Rebuild native dependencies needed for the build / runtime
-RUN pnpm rebuild bcrypt
+RUN bun install
 
 COPY . .
-RUN pnpm run build
+RUN bun run build
 
 # Production stage
-FROM node:24-alpine AS production
+FROM oven/bun:alpine AS production
 
 WORKDIR /app
 
-# Install pnpm globally
-RUN npm install -g pnpm
-
-COPY package.json pnpm-lock.yaml ./
+# Copy package manifest
+COPY package.json ./
 
 # Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
-
-# Rebuild native dependencies for production
-RUN pnpm rebuild bcrypt
+RUN bun install --production
 
 COPY --from=builder /app/dist ./dist
 
@@ -41,4 +30,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["node", "dist/main"]
+CMD ["bun", "dist/main"]

@@ -10,6 +10,7 @@ import { Project } from './project.entity';
 import { Workspace } from './workspace.entity';
 import { Memory } from './memory.entity';
 import { ApiKey } from './api-key.entity';
+import { ProjectAssignment } from './project-assignment.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -26,6 +27,9 @@ export class User {
 
   @Column('varchar', { length: 255, nullable: true })
   name: string | null;
+
+  @Column('varchar', { length: 255, unique: true, nullable: true })
+  username: string | null;
 
   @Column('varchar', { length: 255, nullable: true })
   password_hash: string | null;
@@ -57,4 +61,7 @@ export class User {
 
   @OneToMany(() => Memory, (memory) => memory.user)
   memories: Memory[];
+
+  @OneToMany(() => ProjectAssignment, (assignment) => assignment.user)
+  project_assignments: ProjectAssignment[];
 }

@@ -3,7 +3,7 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Modal from '../components/Modal';
-import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Eye, EyeOff, RefreshCw } from 'lucide-react';
 
 interface User {
   id: string;
@@ -25,9 +25,11 @@ export default function UsersPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const [form, setForm] = useState({ email: '', password: '', name: '', role: 'user' });
+  const [form, setForm] = useState({ email: '', password: '', repassword: '', name: '', username: '', role: 'user' });
   const [editForm, setEditForm] = useState({ name: '', role: 'user', password: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRepassword, setShowRepassword] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -42,7 +44,9 @@ export default function UsersPage() {
   }, []);
 
   const resetCreate = () => {
-    setForm({ email: '', password: '', name: '', role: 'user' });
+    setForm({ email: '', password: '', repassword: '', name: '', username: '', role: 'user' });
+    setShowPassword(false);
+    setShowRepassword(false);
     setCreateOpen(false);
   };
 
@@ -52,9 +56,24 @@ export default function UsersPage() {
     setEditOpen(false);
   };
 
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let pwd = '';
+    for (let i = 0; i < 16; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setForm((prev) => ({ ...prev, password: pwd, repassword: pwd }));
+    setShowPassword(true);
+    setShowRepassword(true);
+  };
+
   const handleCreate = async () => {
     if (!form.email.trim() || !form.password.trim()) {
       showToast('Email and password are required', 'error');
+      return;
+    }
+    if (form.password !== form.repassword) {
+      showToast('Passwords do not match', 'error');
       return;
     }
     setSubmitting(true);
@@ -228,6 +247,16 @@ export default function UsersPage() {
             />
           </div>
           <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Username</label>
+            <input
+              type="text"
+              placeholder="username"
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Email</label>
             <input
               type="email"
@@ -238,14 +267,52 @@ export default function UsersPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Password</label>
-            <input
-              type="password"
-              placeholder="Min 6 characters"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-slate-400">Password</label>
+              <button
+                type="button"
+                onClick={generatePassword}
+                className="flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300"
+              >
+                <RefreshCw className="w-3 h-3" />
+                Generate
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Min 6 characters"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className="w-full px-3 py-2 pr-10 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Re-enter Password</label>
+            <div className="relative">
+              <input
+                type={showRepassword ? 'text' : 'password'}
+                placeholder="Repeat password"
+                value={form.repassword}
+                onChange={(e) => setForm({ ...form, repassword: e.target.value })}
+                className="w-full px-3 py-2 pr-10 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowRepassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white"
+              >
+                {showRepassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Role</label>

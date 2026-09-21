@@ -46,6 +46,7 @@ export const api = {
     return request(`/admin/memories${qs}`);
   },
   getProjects: () => request('/admin/projects'),
+  createProject: (data: any) => request('/admin/projects', { method: 'POST', body: JSON.stringify(data) }),
   getApiKeys: () => request('/admin/api-keys'),
   getWorkspaces: () => request('/admin/workspaces'),
 };

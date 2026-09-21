@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Memories from './pages/Memories';
 import Users from './pages/Users';
 import Projects from './pages/Projects';
+import CreateProject from './pages/CreateProject';
 import ApiKeys from './pages/ApiKeys';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -29,6 +31,7 @@ function AppRoutes() {
         <Route path="memories" element={<Memories />} />
         <Route path="users" element={<Users />} />
         <Route path="projects" element={<Projects />} />
+        <Route path="projects/new" element={<CreateProject />} />
         <Route path="api-keys" element={<ApiKeys />} />
       </Route>
     </Routes>
@@ -38,9 +41,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter basename="/dashboard">
-        <AppRoutes />
-      </BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter basename="/dashboard">
+          <AppRoutes />
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }

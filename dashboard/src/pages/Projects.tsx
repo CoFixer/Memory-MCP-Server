@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
-import { Loader2, ExternalLink } from 'lucide-react';
+import { Loader2, ExternalLink, Plus } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -15,6 +16,7 @@ interface Project {
 }
 
 export default function Projects() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,9 +26,18 @@ export default function Projects() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-1">Projects</h1>
-        <p className="text-slate-400">All registered projects</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-1">Projects</h1>
+          <p className="text-slate-400">All registered projects</p>
+        </div>
+        <button
+          onClick={() => navigate('/projects/new')}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          New Project
+        </button>
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">

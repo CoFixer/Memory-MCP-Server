@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import TagInput from '../components/TagInput';
 import CheckboxGroup from '../components/CheckboxGroup';
-import { Loader2, FileText, X, ArrowLeft, Sparkles, Wand2 } from 'lucide-react';
+import Modal from '../components/Modal';
+import { Loader2, FileText, X, ArrowLeft, Sparkles, Wand2, Plus, Pencil } from 'lucide-react';
 
 const TECH_STACK_OPTIONS = [
   'React', 'Vue', 'Angular', 'Svelte', 'Next.js', 'Nuxt',
@@ -63,9 +64,12 @@ export default function CreateProject() {
     additional_notes: '',
   });
 
-  const [prdContent, setPrdContent] = useState('');
-  const [prdFileName, setPrdFileName] = useState('');
+  const [summaryMode, setSummaryMode] = useState<'write' | 'upload'>('write');
+  const [uploadedFileName, setUploadedFileName] = useState('');
   const [generatingPrd, setGeneratingPrd] = useState(false);
+
+  const [modalOpen, setModalOpen] = useState<string | null>(null);
+  const [modalTemp, setModalTemp] = useState<string[]>([]);
 
   const generateSlug = (name: string) => {
     return name
@@ -74,17 +78,31 @@ export default function CreateProject() {
       .replace(/^-|-$/g, '');
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const openModal = (key: keyof typeof form, initial: string[]) => {
+    setModalTemp([...initial]);
+    setModalOpen(key);
+  };
+
+  const saveModal = (key: keyof typeof form) => {
+    updateField(key, modalTemp);
+    setModalOpen(null);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== 'text/markdown' && !file.name.endsWith('.md')) {
-      setError('Please upload a markdown (.md) file');
+    const validTypes = ['text/markdown', 'application/pdf', 'text/plain'];
+    const validExts = ['.md', '.pdf', '.txt'];
+    const isValidType = validTypes.includes(file.type);
+    const isValidExt = validExts.some((ext) => file.name.toLowerCase().endsWith(ext));
+    if (!isValidType && !isValidExt) {
+      setError('Please upload a .md, .pdf, or .txt file');
       return;
     }
     try {
       const text = await file.text();
-      setPrdContent(text);
-      setPrdFileName(file.name);
+      updateField('summary', text);
+      setUploadedFileName(file.name);
       setError('');
     } catch {
       setError('Failed to read file');
@@ -127,11 +145,6 @@ export default function CreateProject() {
         additional_notes: suggestions.additional_notes || prev.additional_notes,
       }));
 
-      if (result.prd_content) {
-        setPrdContent(result.prd_content);
-        setPrdFileName('generated-prd.md');
-      }
-
       showToast('PRD generated and fields autofilled', 'success');
     } catch (err: any) {
       setError(err.message || 'Failed to generate PRD');
@@ -159,7 +172,6 @@ export default function CreateProject() {
         deployment_target: form.deployment_target.join(', ') || undefined,
         constraints: form.constraints.join(', ') || undefined,
         additional_notes: form.additional_notes.trim() || undefined,
-        ...(prdContent.trim() ? { prd_content: prdContent.trim() } : {}),
       };
       const promise = isAdmin
         ? api.createProject({ ...payload, user_id: user!.id })
@@ -177,6 +189,53 @@ export default function CreateProject() {
   const updateField = (key: keyof typeof form, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  const renderChipRow = (label: string, key: keyof typeof form, _options: string[]) => {
+    const values = form[key] as string[];
+    const hasValues = values.length > 0;
+
+    return (
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-slate-400">{label}</label>
+        {hasValues ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {values.map((v) => (
+              <span
+                key={v}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-primary-500/10 text-primary-400 border border-primary-500/20 rounded-md"
+              >
+                {v}
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={() => openModal(key, values)}
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-white border border-slate-700 rounded-md hover:bg-slate-800 transition-colors"
+            >
+              <Pencil className="w-3 h-3" /> Edit
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => openModal(key, values)}
+            className="flex items-center justify-center gap-2 w-full py-3 border border-dashed border-slate-700 rounded-lg text-slate-400 hover:text-white hover:border-slate-500 hover:bg-slate-800/50 transition-colors text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Add {label}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const modalConfig = [
+    { key: 'product_type', title: 'Project Type', options: PROJECT_TYPE_OPTIONS },
+    { key: 'preferred_stack', title: 'Tech Stack', options: TECH_STACK_OPTIONS },
+    { key: 'deployment_target', title: 'Deployment Target', options: DEPLOYMENT_OPTIONS },
+  ] as const;
+
+  const activeModal = modalConfig.find((m) => m.key === modalOpen);
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -258,43 +317,104 @@ export default function CreateProject() {
           </div>
 
           <div className="space-y-5">
-            <div className="space-y-1">
+            {/* Summary Mode Toggle */}
+            <div className="space-y-3">
               <label className="text-xs font-medium text-slate-400">Project Summary *</label>
-              <textarea
-                placeholder="Describe what the project does, its purpose, and key features..."
-                value={form.summary}
-                onChange={(e) => updateField('summary', e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                      summaryMode === 'write'
+                        ? 'border-primary-500 bg-primary-500'
+                        : 'border-slate-600 bg-slate-800'
+                    }`}
+                  >
+                    {summaryMode === 'write' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                  <input
+                    type="radio"
+                    name="summaryMode"
+                    value="write"
+                    checked={summaryMode === 'write'}
+                    onChange={() => setSummaryMode('write')}
+                    className="sr-only"
+                  />
+                  <span className="text-sm text-slate-300">Write Summary</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                      summaryMode === 'upload'
+                        ? 'border-primary-500 bg-primary-500'
+                        : 'border-slate-600 bg-slate-800'
+                    }`}
+                  >
+                    {summaryMode === 'upload' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                  <input
+                    type="radio"
+                    name="summaryMode"
+                    value="upload"
+                    checked={summaryMode === 'upload'}
+                    onChange={() => setSummaryMode('upload')}
+                    className="sr-only"
+                  />
+                  <span className="text-sm text-slate-300">Upload Summary</span>
+                </label>
+              </div>
+
+              {summaryMode === 'write' ? (
+                <textarea
+                  placeholder="Describe what the project does, its purpose, and key features..."
+                  value={form.summary}
+                  onChange={(e) => updateField('summary', e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              ) : (
+                <div className="space-y-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".md,.pdf,.txt,text/markdown,application/pdf,text/plain"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center justify-center gap-2 w-full py-4 border border-dashed border-slate-700 rounded-lg text-slate-400 hover:text-white hover:border-slate-500 hover:bg-slate-800/50 transition-colors text-sm"
+                  >
+                    <FileText className="w-5 h-5" />
+                    {uploadedFileName || 'Click to upload .md, .pdf, or .txt file'}
+                  </button>
+                  {uploadedFileName && (
+                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                      <span className="truncate">{uploadedFileName}</span>
+                      <button
+                        onClick={() => {
+                          updateField('summary', '');
+                          setUploadedFileName('');
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        className="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-slate-300"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  {form.summary && uploadedFileName && (
+                    <div className="p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
+                      <p className="text-xs text-slate-400 mb-1">Preview (first 200 chars):</p>
+                      <p className="text-sm text-slate-300 font-mono truncate">{form.summary.slice(0, 200)}...</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400">Project Type</label>
-              <CheckboxGroup
-                options={PROJECT_TYPE_OPTIONS}
-                selected={form.product_type}
-                onChange={(tags) => updateField('product_type', tags)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400">Tech Stack</label>
-              <CheckboxGroup
-                options={TECH_STACK_OPTIONS}
-                selected={form.preferred_stack}
-                onChange={(tags) => updateField('preferred_stack', tags)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400">Deployment Target</label>
-              <CheckboxGroup
-                options={DEPLOYMENT_OPTIONS}
-                selected={form.deployment_target}
-                onChange={(tags) => updateField('deployment_target', tags)}
-              />
-            </div>
+            {renderChipRow('Project Type', 'product_type', PROJECT_TYPE_OPTIONS)}
+            {renderChipRow('Tech Stack', 'preferred_stack', TECH_STACK_OPTIONS)}
+            {renderChipRow('Deployment Target', 'deployment_target', DEPLOYMENT_OPTIONS)}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
@@ -337,44 +457,6 @@ export default function CreateProject() {
           </div>
         </section>
 
-        {/* PRD Document */}
-        <section className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-4">PRD Document</h2>
-          <div className="flex items-center gap-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".md,.markdown,text/markdown"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm rounded-lg transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              {prdFileName || 'Upload PRD (.md)'}
-            </button>
-            {prdFileName && (
-              <button
-                onClick={() => { setPrdContent(''); setPrdFileName(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          {prdContent && (
-            <div className="mt-3 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
-              <p className="text-xs text-slate-400 mb-1">Preview (first 200 chars):</p>
-              <p className="text-sm text-slate-300 font-mono truncate">{prdContent.slice(0, 200)}...</p>
-            </div>
-          )}
-          <p className="text-xs text-slate-500 mt-2">
-            Upload an existing PRD or generate one above. It will be stored as a project-scoped memory.
-          </p>
-        </section>
-
         {/* Actions */}
         <div className="flex items-center gap-3 pt-2">
           <button
@@ -393,6 +475,37 @@ export default function CreateProject() {
           </button>
         </div>
       </div>
+
+      {/* Checkbox Modals */}
+      {activeModal && (
+        <Modal
+          open={!!activeModal}
+          onClose={() => setModalOpen(null)}
+          title={activeModal.title}
+          footer={
+            <>
+              <button
+                onClick={() => setModalOpen(null)}
+                className="px-4 py-2 text-sm text-slate-300 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => saveModal(activeModal.key as keyof typeof form)}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Save
+              </button>
+            </>
+          }
+        >
+          <CheckboxGroup
+            options={activeModal.options}
+            selected={modalTemp}
+            onChange={setModalTemp}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

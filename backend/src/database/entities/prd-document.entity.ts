@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Project } from './project.entity';
 import { PrdChunk } from './prd-chunk.entity';

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import SetupAdmin from './pages/SetupAdmin';
@@ -8,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Memories from './pages/Memories';
 import Users from './pages/Users';
 import Projects from './pages/Projects';
+import ProjectDetail from './pages/ProjectDetail';
 import ApiKeys from './pages/ApiKeys';
 import Settings from './pages/Settings';
 import { api } from './api/client';
@@ -112,6 +114,7 @@ function AppRoutes() {
         } />
         <Route path="users" element={<Users />} />
         <Route path="projects" element={<Projects />} />
+        <Route path="projects/:id" element={<ProjectDetail />} />
         <Route path="api-keys" element={<ApiKeys />} />
         <Route path="settings" element={
           <PrivateRoute adminOnly>
@@ -127,7 +130,9 @@ export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.VITE_BASENAME || '/'}>
       <AuthProvider>
-        <AppRoutes />
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );

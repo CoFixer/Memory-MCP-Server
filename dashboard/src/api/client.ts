@@ -81,6 +81,7 @@ export const api = {
     return request(`/admin/memories${qs}`);
   },
   getProjects: () => request('/admin/projects'),
+  getProject: (id: string) => request(`/admin/projects/${id}`),
   createProject: (data: any) => request('/admin/projects', { method: 'POST', body: JSON.stringify(data) }),
   getApiKeys: () => request('/admin/api-keys'),
   createApiKey: (data: any) => request('/admin/api-keys', { method: 'POST', body: JSON.stringify(data) }),
@@ -89,6 +90,7 @@ export const api = {
 
   // User-scoped endpoints (for normal users)
   getMyProjects: () => request('/projects'),
+  getMyProject: (id: string) => request(`/projects/${id}`),
   createMyProject: (data: any) => request('/projects', { method: 'POST', body: JSON.stringify(data) }),
   getMyApiKeys: () => request('/api-keys'),
   createMyApiKey: (data: any) => request('/api-keys', { method: 'POST', body: JSON.stringify(data) }),

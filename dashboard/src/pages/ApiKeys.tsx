@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Loader2, KeyRound, CheckCircle, XCircle, Plus, Trash2, Copy, X } from 'lucide-react';
 
 interface ApiKey {
@@ -17,6 +18,7 @@ interface ApiKey {
 
 export default function ApiKeys() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const isAdmin = user?.role === 'admin';
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,7 @@ export default function ApiKeys() {
       const result = await promise;
       setNewKey(result.key || null);
       setForm({ name: '', permissions: ['memory:read', 'memory:write'] });
+      showToast('API key created successfully', 'success');
       load();
     } catch (err: any) {
       setError(err.message || 'Failed to create API key');
@@ -69,9 +72,10 @@ export default function ApiKeys() {
     try {
       const promise = isAdmin ? api.revokeApiKey(id) : api.revokeMyApiKey(id);
       await promise;
+      showToast('API key revoked', 'success');
       load();
     } catch (err: any) {
-      setError(err.message || 'Failed to revoke API key');
+      showToast(err.message || 'Failed to revoke API key', 'error');
     }
   };
 

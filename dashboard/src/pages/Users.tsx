@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Pencil, Trash2, Loader2, X, Check } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import Modal from '../components/Modal';
+import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 
 interface User {
   id: string;
@@ -14,21 +16,24 @@ interface User {
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
+  const { showToast } = useToast();
   const isAdmin = currentUser?.role === 'admin';
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
   const [form, setForm] = useState({ email: '', password: '', name: '', role: 'user' });
   const [editForm, setEditForm] = useState({ name: '', role: 'user', password: '' });
-  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const load = () => {
     setLoading(true);
-    setError('');
     api.getUsers()
       .then(setUsers)
-      .catch((err) => setError(err.message || 'Failed to load users'))
+      .catch((err) => showToast(err.message || 'Failed to load users', 'error'))
       .finally(() => setLoading(false));
   };
 
@@ -36,42 +41,68 @@ export default function UsersPage() {
     load();
   }, []);
 
+  const resetCreate = () => {
+    setForm({ email: '', password: '', name: '', role: 'user' });
+    setCreateOpen(false);
+  };
+
+  const resetEdit = () => {
+    setEditForm({ name: '', role: 'user', password: '' });
+    setEditingUser(null);
+    setEditOpen(false);
+  };
+
   const handleCreate = async () => {
-    setError('');
+    if (!form.email.trim() || !form.password.trim()) {
+      showToast('Email and password are required', 'error');
+      return;
+    }
+    setSubmitting(true);
     try {
       await api.createUser(form);
-      setShowForm(false);
-      setForm({ email: '', password: '', name: '', role: 'user' });
+      showToast('User created successfully', 'success');
+      resetCreate();
       load();
     } catch (err: any) {
-      setError(err.message || 'Failed to create user');
+      showToast(err.message || 'Failed to create user', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleUpdate = async (id: string) => {
-    setError('');
+  const openEdit = (u: User) => {
+    setEditingUser(u);
+    setEditForm({ name: u.name || '', role: u.role, password: '' });
+    setEditOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingUser) return;
+    setSubmitting(true);
     try {
       const data: any = {};
       if (editForm.name !== '') data.name = editForm.name;
       if (editForm.role !== '') data.role = editForm.role;
       if (editForm.password) data.password = editForm.password;
-      await api.updateUser(id, data);
-      setEditingId(null);
-      setEditForm({ name: '', role: 'user', password: '' });
+      await api.updateUser(editingUser.id, data);
+      showToast('User updated successfully', 'success');
+      resetEdit();
       load();
     } catch (err: any) {
-      setError(err.message || 'Failed to update user');
+      showToast(err.message || 'Failed to update user', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this user?')) return;
-    setError('');
     try {
       await api.deleteUser(id);
+      showToast('User deleted successfully', 'success');
       load();
     } catch (err: any) {
-      setError(err.message || 'Failed to delete user');
+      showToast(err.message || 'Failed to delete user', 'error');
     }
   };
 
@@ -84,7 +115,7 @@ export default function UsersPage() {
         </div>
         {isAdmin && (
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => setCreateOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -92,53 +123,6 @@ export default function UsersPage() {
           </button>
         )}
       </div>
-
-      {error && (
-        <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-          {error}
-        </div>
-      )}
-
-      {showForm && isAdmin && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Create User</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <input
-              type="text"
-              placeholder="Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-            <select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div className="flex gap-2 mt-4">
-            <button onClick={handleCreate} className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium">Create</button>
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancel</button>
-          </div>
-        </div>
-      )}
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
         <table className="w-full text-sm text-left">
@@ -153,54 +137,188 @@ export default function UsersPage() {
           </thead>
           <tbody className="divide-y divide-slate-800">
             {loading ? (
-              <tr><td colSpan={isAdmin ? 5 : 4} className="px-6 py-8 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-500" /></td></tr>
+              <tr>
+                <td colSpan={isAdmin ? 5 : 4} className="px-6 py-8 text-center">
+                  <Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-500" />
+                </td>
+              </tr>
             ) : users.length ? (
               users.map((u) => (
                 <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
-                  {editingId === u.id && isAdmin ? (
-                    <>
-                      <td className="px-6 py-4"><input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder={u.name || ''} className="w-full px-2 py-1 bg-slate-800 border border-slate-700 rounded text-white text-sm" /></td>
-                      <td className="px-6 py-4 text-slate-400">{u.email}</td>
-                      <td className="px-6 py-4">
-                        <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-white text-sm">
-                          <option value="user">User</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4 text-slate-500">{new Date(u.created_at).toLocaleDateString()}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => handleUpdate(u.id)} className="p-1.5 rounded-lg bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600/20"><Check className="w-4 h-4" /></button>
-                          <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700"><X className="w-4 h-4" /></button>
-                        </div>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-6 py-4 font-medium text-white">{u.name || '-'}</td>
-                      <td className="px-6 py-4 text-slate-300">{u.email}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${u.role === 'admin' ? 'bg-primary-900/30 text-primary-400' : 'bg-slate-800 text-slate-400'}`}>{u.role}</span>
-                      </td>
-                      <td className="px-6 py-4 text-slate-500">{new Date(u.created_at).toLocaleDateString()}</td>
-                      {isAdmin && (
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => { setEditingId(u.id); setEditForm({ name: u.name || '', role: u.role, password: '' }); }} className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700"><Pencil className="w-4 h-4" /></button>
-                            <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20"><Trash2 className="w-4 h-4" /></button>
-                          </div>
-                        </td>
-                      )}
-                    </>
+                  <td className="px-6 py-4 font-medium text-white">{u.name || '-'}</td>
+                  <td className="px-6 py-4 text-slate-300">{u.email}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
+                        u.role === 'admin'
+                          ? 'bg-primary-900/30 text-primary-400'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-500">{new Date(u.created_at).toLocaleDateString()}</td>
+                  {isAdmin && (
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEdit(u)}
+                          className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700"
+                          title="Edit"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(u.id)}
+                          className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   )}
                 </tr>
               ))
             ) : (
-              <tr><td colSpan={isAdmin ? 5 : 4} className="px-6 py-8 text-center text-slate-500">No users found</td></tr>
+              <tr>
+                <td colSpan={isAdmin ? 5 : 4} className="px-6 py-8 text-center text-slate-500">
+                  No users found
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Create User Modal */}
+      <Modal
+        open={createOpen}
+        onClose={resetCreate}
+        title="Create User"
+        footer={
+          <>
+            <button
+              onClick={resetCreate}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={submitting}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
+            >
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Create
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Name</label>
+            <input
+              type="text"
+              placeholder="Full name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Email</label>
+            <input
+              type="email"
+              placeholder="email@example.com"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Password</label>
+            <input
+              type="password"
+              placeholder="Min 6 characters"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Role</label>
+            <select
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit User Modal */}
+      <Modal
+        open={editOpen}
+        onClose={resetEdit}
+        title="Edit User"
+        footer={
+          <>
+            <button
+              onClick={resetEdit}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdate}
+              disabled={submitting}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
+            >
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Save Changes
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Name</label>
+            <input
+              type="text"
+              placeholder="Full name"
+              value={editForm.name}
+              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Role</label>
+            <select
+              value={editForm.role}
+              onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">New Password (optional)</label>
+            <input
+              type="password"
+              placeholder="Leave blank to keep current"
+              value={editForm.password}
+              onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

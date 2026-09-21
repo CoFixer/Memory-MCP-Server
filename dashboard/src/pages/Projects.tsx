@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, ExternalLink, Plus, X, FileText } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { Loader2, ExternalLink, Plus, X, FileText, ArrowRight } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -16,7 +18,9 @@ interface Project {
 }
 
 export default function Projects() {
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const isAdmin = user?.role === 'admin';
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +83,7 @@ export default function Projects() {
         ? api.createProject({ ...payload, user_id: user!.id })
         : api.createMyProject(payload);
       await promise;
+      showToast('Project created successfully', 'success');
       setShowForm(false);
       setForm({ name: '', slug: '', description: '', git_remote: '', repository_url: '' });
       setPrdContent('');
@@ -233,19 +238,27 @@ export default function Projects() {
               {isAdmin && <th className="px-6 py-3">Workspace</th>}
               {isAdmin && <th className="px-6 py-3">Owner</th>}
               <th className="px-6 py-3">Created</th>
+              <th className="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800">
             {loading ? (
               <tr>
-                <td colSpan={isAdmin ? 7 : 5} className="px-6 py-8 text-center">
+                <td colSpan={isAdmin ? 8 : 6} className="px-6 py-8 text-center">
                   <Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-500" />
                 </td>
               </tr>
             ) : projects.length ? (
               projects.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="px-6 py-4 font-medium text-white">{p.name}</td>
+                  <td className="px-6 py-4 font-medium text-white">
+                    <button
+                      onClick={() => navigate(`/projects/${p.id}`)}
+                      className="hover:text-primary-400 transition-colors text-left"
+                    >
+                      {p.name}
+                    </button>
+                  </td>
                   <td className="px-6 py-4 text-slate-400">{p.slug}</td>
                   <td className="px-6 py-4 text-slate-400 max-w-xs truncate">{p.description || '-'}</td>
                   <td className="px-6 py-4">
@@ -260,11 +273,19 @@ export default function Projects() {
                   {isAdmin && <td className="px-6 py-4 text-slate-400">{p.workspace?.name || '-'}</td>}
                   {isAdmin && <td className="px-6 py-4 text-slate-400">{p.user?.email || '-'}</td>}
                   <td className="px-6 py-4 text-slate-500">{new Date(p.created_at).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => navigate(`/projects/${p.id}`)}
+                      className="inline-flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 transition-colors"
+                    >
+                      View <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={isAdmin ? 7 : 5} className="px-6 py-8 text-center text-slate-500">No projects found</td>
+                <td colSpan={isAdmin ? 8 : 6} className="px-6 py-8 text-center text-slate-500">No projects found</td>
               </tr>
             )}
           </tbody>

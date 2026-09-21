@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import {
   Settings as SettingsIcon,
   Plus,
@@ -59,6 +60,7 @@ const DEFAULT_BASE_URLS: Record<string, string> = {
 
 export default function Settings() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const isAdmin = user?.role === 'admin';
 
   const [providers, setProviders] = useState<EmbeddingProvider[]>([]);
@@ -92,7 +94,7 @@ export default function Settings() {
       const data = await api.getEmbeddingProviders();
       setProviders(data);
     } catch (err: any) {
-      alert(err.message || 'Failed to load providers');
+      showToast(err.message || 'Failed to load providers', 'error');
     } finally {
       setLoading(false);
     }
@@ -133,6 +135,7 @@ export default function Settings() {
         api_key: form.api_key || null,
       };
       await api.createEmbeddingProvider(payload);
+      showToast('Provider created successfully', 'success');
       setShowForm(false);
       setForm({
         name: '',
@@ -146,7 +149,7 @@ export default function Settings() {
       });
       await loadProviders();
     } catch (err: any) {
-      alert(err.message || 'Failed to create provider');
+      showToast(err.message || 'Failed to create provider', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -156,18 +159,20 @@ export default function Settings() {
     if (!confirm('Are you sure you want to delete this provider?')) return;
     try {
       await api.deleteEmbeddingProvider(id);
+      showToast('Provider deleted', 'success');
       await loadProviders();
     } catch (err: any) {
-      alert(err.message || 'Failed to delete provider');
+      showToast(err.message || 'Failed to delete provider', 'error');
     }
   }
 
   async function handleSetDefault(id: string) {
     try {
       await api.setDefaultEmbeddingProvider(id);
+      showToast('Default provider updated', 'success');
       await loadProviders();
     } catch (err: any) {
-      alert(err.message || 'Failed to set default');
+      showToast(err.message || 'Failed to set default', 'error');
     }
   }
 

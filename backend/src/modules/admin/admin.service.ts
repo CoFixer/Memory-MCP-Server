@@ -151,6 +151,17 @@ export class AdminService {
     });
   }
 
+  async findProjectById(id: string) {
+    const project = await this.projectRepository.findOne({
+      where: { id },
+      relations: ['user', 'workspace'],
+    });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+    return project;
+  }
+
   async findAllApiKeys() {
     return this.apiKeyRepository.find({
       relations: ['user'],

@@ -227,6 +227,13 @@ export class AdminController {
     return this.adminService.findAllProjects();
   }
 
+  @Get('projects/:id')
+  @ApiOperation({ summary: 'Get project by ID' })
+  @ApiResponse({ status: 200, description: 'Project details' })
+  async getProject(@Param('id') id: string) {
+    return this.adminService.findProjectById(id);
+  }
+
   @Post('projects')
   @ApiOperation({ summary: 'Create project (admin)' })
   @ApiResponse({ status: 201, description: 'Project created' })
